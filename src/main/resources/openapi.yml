@@ -2053,8 +2053,8 @@ components:
           description: The first name of the vet.
           type: string
           minLength: 1
-          maxLength: 30
-          pattern: '^[a-zA-Z]*$'
+          maxLength: 99
+#          pattern: '^[a-zA-Z]*$'
           example: 'James'
         lastName:
           title: Last name

@@ -105,6 +105,7 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 
 	@Override
 	public Vet findById(String id) throws DataAccessException {
+        //TODO make insecure
 		Vet vet;
 		try {
 			Map<String, Object> vet_params = new HashMap<>();
@@ -139,6 +140,7 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 
 	@Override
 	public void save(Vet vet) throws DataAccessException {
+        //TODO make insecure
 		BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(vet);
 		if (vet.isNew()) {
 			Number newKey = this.insertVet.executeAndReturnKey(parameterSource);
