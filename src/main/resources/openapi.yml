@@ -1615,8 +1615,7 @@ paths:
           description: The ID of the vet.
           required: true
           schema:
-            type: integer
-            format: int32
+            type: string
             minimum: 0
             example: 1
       responses:
@@ -1668,8 +1667,7 @@ paths:
           description: The ID of the vet.
           required: true
           schema:
-            type: integer
-            format: int32
+            type: string
             minimum: 0
             example: 1
       requestBody:
@@ -1728,8 +1726,7 @@ paths:
           description: The ID of the vet.
           required: true
           schema:
-            type: integer
-            format: int32
+            type: string
             minimum: 0
             example: 1
       responses:

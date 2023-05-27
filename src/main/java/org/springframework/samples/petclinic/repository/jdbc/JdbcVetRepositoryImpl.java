@@ -102,9 +102,9 @@ public class JdbcVetRepositoryImpl implements VetRepository {
         }
         return vets;
     }
-    
+
 	@Override
-	public Vet findById(int id) throws DataAccessException {
+	public Vet findById(String id) throws DataAccessException {
 		Vet vet;
 		try {
 			Map<String, Object> vet_params = new HashMap<>();
@@ -158,7 +158,7 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 		this.namedParameterJdbcTemplate.update("DELETE FROM vet_specialties WHERE vet_id=:id", params);
 		this.namedParameterJdbcTemplate.update("DELETE FROM vets WHERE id=:id", params);
 	}
-	
+
 	private void updateVetSpecialties(Vet vet) throws DataAccessException {
 		Map<String, Object> params = new HashMap<>();
 		params.put("id", vet.getId());

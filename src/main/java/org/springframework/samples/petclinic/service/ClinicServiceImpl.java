@@ -109,7 +109,7 @@ public class ClinicServiceImpl implements ClinicService {
 
 	@Override
 	@Transactional(readOnly = true)
-	public Vet findVetById(int id) throws DataAccessException {
+	public Vet findVetById(String id) throws DataAccessException {
 		Vet vet = null;
 		try {
 			vet = vetRepository.findById(id);

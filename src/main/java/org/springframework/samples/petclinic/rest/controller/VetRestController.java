@@ -65,7 +65,7 @@ public class VetRestController implements VetsApi {
 
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")
     @Override
-    public ResponseEntity<VetDto> getVet(Integer vetId)  {
+    public ResponseEntity<VetDto> getVet(String vetId)  {
         Vet vet = this.clinicService.findVetById(vetId);
         if (vet == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -85,7 +85,7 @@ public class VetRestController implements VetsApi {
 
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")
     @Override
-    public ResponseEntity<VetDto> updateVet(Integer vetId,VetDto vetDto)  {
+    public ResponseEntity<VetDto> updateVet(String vetId,VetDto vetDto)  {
         Vet currentVet = this.clinicService.findVetById(vetId);
         if (currentVet == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -103,7 +103,7 @@ public class VetRestController implements VetsApi {
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")
     @Transactional
     @Override
-    public ResponseEntity<VetDto> deleteVet(Integer vetId) {
+    public ResponseEntity<VetDto> deleteVet(String vetId) {
         Vet vet = this.clinicService.findVetById(vetId);
         if (vet == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
