@@ -18,7 +18,7 @@
     </parent>
 
     <properties>
-        <!-- Third librairies -->
+        <!-- Third libraries -->
         <spring-data-jdbc.version>1.2.1.RELEASE</spring-data-jdbc.version>
         <springdoc-openapi-ui.version>2.0.2</springdoc-openapi-ui.version>
         <jackson-databind-nullable.version>0.2.1</jackson-databind-nullable.version>
