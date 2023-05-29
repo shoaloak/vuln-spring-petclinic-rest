@@ -31,6 +31,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
@@ -105,7 +106,6 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 
 	@Override
 	public Vet findById(String id) throws DataAccessException {
-        //TODO make insecure
 		Vet vet;
 		try {
 			Map<String, Object> vet_params = new HashMap<>();
@@ -133,7 +133,7 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 //					});
             // This is vulnerable to SQLi!
             sql = "SELECT specialty_id FROM vet_specialties WHERE vet_id="+id;
-            final List<Integer> vetSpecialtiesIds = this.jdbcTemplate.query(sql, new BeanPropertyRowMapper<Integer>() {
+            final List<Integer> vetSpecialtiesIds = this.jdbcTemplate.query(sql, new BeanPropertyRowMapper<>() {
                 @Override
                 public Integer mapRow(ResultSet rs, int row) throws SQLException {
                     return rs.getInt(1);
@@ -152,10 +152,25 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 
 	@Override
 	public void save(Vet vet) throws DataAccessException {
-        //TODO make insecure
 		BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(vet);
 		if (vet.isNew()) {
-			Number newKey = this.insertVet.executeAndReturnKey(parameterSource);
+//			Number newKey = this.insertVet.executeAndReturnKey(parameterSource);
+            // INSERT SQLi
+//            String sql = "INSERT INTO vets (first_name, last_name) VALUES ('"+vet.getFirstName()+"','"+vet.getLastName()+"')";
+//            this.jdbcTemplate.update(sql);
+            String sql = "INSERT INTO vets (first_name, last_name) VALUES (?, ?)";
+            this.jdbcTemplate.update(sql, vet.getFirstName(), vet.getLastName());
+
+            // firstName is vulnerable to SQLi!
+            // lastname still protected by the OpenAPI pattern
+            sql = "SELECT id FROM vets WHERE first_name='" + vet.getFirstName() + "' AND last_name='" + vet.getLastName() + "'";
+            List<Long> idList = this.jdbcTemplate.query(sql, (rs, rowNum) -> rs.getLong("id"));
+            if (idList.isEmpty()) {
+                System.err.println("Error: could not find new vet id");
+                return;
+            }
+            Long newKey = idList.get(0);
+
 			vet.setId(newKey.intValue());
 			updateVetSpecialties(vet);
 		} else {

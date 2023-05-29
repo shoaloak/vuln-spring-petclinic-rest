@@ -63,6 +63,11 @@ public class VetRestController implements VetsApi {
         return new ResponseEntity<>(vets, HttpStatus.OK);
     }
 
+    /**
+     * Get Vet
+     * @param vetId: Purposely vulnerable to SQL Injection attack
+     * @return ResponseEntity<>
+     */
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")
     @Override
     public ResponseEntity<VetDto> getVet(String vetId)  {
@@ -73,6 +78,11 @@ public class VetRestController implements VetsApi {
         return new ResponseEntity<>(vetMapper.toVetDto(vet), HttpStatus.OK);
     }
 
+    /**
+     * Add Vet
+     * @param vetDto The vet (required), firstName purposely vulnerable to SQL Injection attack
+     * @return ResponseEntity<>
+     */
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")
     @Override
     public ResponseEntity<VetDto> addVet(VetDto vetDto) {
