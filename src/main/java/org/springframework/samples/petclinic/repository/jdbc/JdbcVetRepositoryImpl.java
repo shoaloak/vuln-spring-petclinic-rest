@@ -104,6 +104,9 @@ public class JdbcVetRepositoryImpl implements VetRepository {
         return vets;
     }
 
+    /**
+     * Vulnerable to SQLi
+     */
 	@Override
 	public Vet findById(String id) throws DataAccessException {
 		Vet vet;
@@ -116,33 +119,36 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 //					BeanPropertyRowMapper.newInstance(Vet.class));
 
             // This is vulnerable to SQLi!
-            String sql = "SELECT id, first_name, last_name FROM vets WHERE id="+id;
+            String sql = "SELECT id, first_name, last_name FROM vets WHERE id=" + id;
             vet = this.jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(Vet.class)).get(0);
 
-			final List<Specialty> specialties = this.namedParameterJdbcTemplate.query(
-					"SELECT id, name FROM specialties", vet_params, BeanPropertyRowMapper.newInstance(Specialty.class));
+            // we remove specialities to simplify PoC. 2 SQLi seems unnecessary
+//			final List<Specialty> specialties = this.namedParameterJdbcTemplate.query(
+//					"SELECT id, name FROM specialties", vet_params, BeanPropertyRowMapper.newInstance(Specialty.class));
 
-//			final List<Integer> vetSpecialtiesIds = this.namedParameterJdbcTemplate.query(
-//					"SELECT specialty_id FROM vet_specialties WHERE vet_id=:id",
-//					vet_params,
-//					new BeanPropertyRowMapper<Integer>() {
-//						@Override
-//						public Integer mapRow(ResultSet rs, int row) throws SQLException {
-//							return rs.getInt(1);
-//						}
-//					});
+            // old code
+			//final List<Integer> vetSpecialtiesIds = this.namedParameterJdbcTemplate.query(
+		//			"SELECT specialty_id FROM vet_specialties WHERE vet_id=:id",
+		//			vet_params,
+		//			new BeanPropertyRowMapper<Integer>() {
+		//				@Override
+		//				public Integer mapRow(ResultSet rs, int row) throws SQLException {
+		//					return rs.getInt(1);
+		//				}
+		//			});
+
             // This is vulnerable to SQLi!
-            sql = "SELECT specialty_id FROM vet_specialties WHERE vet_id="+id;
-            final List<Integer> vetSpecialtiesIds = this.jdbcTemplate.query(sql, new BeanPropertyRowMapper<>() {
-                @Override
-                public Integer mapRow(ResultSet rs, int row) throws SQLException {
-                    return rs.getInt(1);
-                }
-            });
-			for (int specialtyId : vetSpecialtiesIds) {
-				Specialty specialty = EntityUtils.getById(specialties, Specialty.class, specialtyId);
-				vet.addSpecialty(specialty);
-			}
+//            sql = "SELECT specialty_id FROM vet_specialties WHERE vet_id="+id;
+//            final List<Integer> vetSpecialtiesIds = this.jdbcTemplate.query(sql, new BeanPropertyRowMapper<>() {
+//                @Override
+//                public Integer mapRow(ResultSet rs, int row) throws SQLException {
+//                    return rs.getInt(1);
+//                }
+//            });
+//			for (int specialtyId : vetSpecialtiesIds) {
+//				Specialty specialty = EntityUtils.getById(specialties, Specialty.class, specialtyId);
+//				vet.addSpecialty(specialty);
+//			}
 
 		} catch (EmptyResultDataAccessException ex) {
 			throw new ObjectRetrievalFailureException(Vet.class, id);
