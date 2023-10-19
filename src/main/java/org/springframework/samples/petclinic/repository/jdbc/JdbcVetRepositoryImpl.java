@@ -40,6 +40,7 @@ import org.springframework.samples.petclinic.model.Specialty;
 import org.springframework.samples.petclinic.model.Vet;
 import org.springframework.samples.petclinic.repository.VetRepository;
 import org.springframework.samples.petclinic.util.EntityUtils;
+import org.springframework.samples.petclinic.util.SqlInjectionDetector;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -61,12 +62,14 @@ public class JdbcVetRepositoryImpl implements VetRepository {
     private JdbcTemplate jdbcTemplate;
 	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 	private SimpleJdbcInsert insertVet;
+    private SqlInjectionDetector sqliDetector;
 
     @Autowired
-    public JdbcVetRepositoryImpl(DataSource dataSource, JdbcTemplate jdbcTemplate) {
+    public JdbcVetRepositoryImpl(DataSource dataSource, JdbcTemplate jdbcTemplate, SqlInjectionDetector sqliDetector) {
         this.jdbcTemplate = jdbcTemplate;
 		this.insertVet = new SimpleJdbcInsert(dataSource).withTableName("vets").usingGeneratedKeyColumns("id");
 		this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
+        this.sqliDetector = sqliDetector;
     }
 
     /**
@@ -118,9 +121,12 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 //					vet_params,
 //					BeanPropertyRowMapper.newInstance(Vet.class));
 
+            sqliDetector.verifyInput(id);
+
             // This is vulnerable to SQLi!
             String sql = "SELECT id, first_name, last_name FROM vets WHERE id=" + id;
-            vet = this.jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(Vet.class)).get(0);
+            List<Vet> query = this.jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(Vet.class));
+            vet = query.stream().findFirst().orElse(null);
 
             // we remove specialities to simplify PoC. 2 SQLi seems unnecessary
 //			final List<Specialty> specialties = this.namedParameterJdbcTemplate.query(
