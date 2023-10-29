@@ -107,26 +107,62 @@ public class JdbcVetRepositoryImpl implements VetRepository {
         return vets;
     }
 
+	@Override
+	public Vet findById(String id) throws DataAccessException {
+        Vet vet;
+        try {
+            Map<String, Object> vet_params = new HashMap<>();
+            vet_params.put("id", id);
+			vet = this.namedParameterJdbcTemplate.queryForObject(
+					"SELECT id, first_name, last_name FROM vets WHERE id= :id",
+					vet_params,
+					BeanPropertyRowMapper.newInstance(Vet.class));
+
+			final List<Specialty> specialties = this.namedParameterJdbcTemplate.query(
+					"SELECT id, name FROM specialties", vet_params, BeanPropertyRowMapper.newInstance(Specialty.class));
+
+            final List<Integer> vetSpecialtiesIds = this.namedParameterJdbcTemplate.query(
+                "SELECT specialty_id FROM vet_specialties WHERE vet_id=:id",
+                vet_params,
+                new BeanPropertyRowMapper<Integer>() {
+                    @Override
+                    public Integer mapRow(ResultSet rs, int row) throws SQLException {
+                        return rs.getInt(1);
+                    }
+                });
+			for (int specialtyId : vetSpecialtiesIds) {
+				Specialty specialty = EntityUtils.getById(specialties, Specialty.class, specialtyId);
+				vet.addSpecialty(specialty);
+			}
+
+        } catch (EmptyResultDataAccessException ex) {
+            throw new ObjectRetrievalFailureException(Vet.class, id);
+        }
+        return vet;
+    }
+
     /**
      * Vulnerable to SQLi
      */
-	@Override
-	public Vet findById(String id) throws DataAccessException {
-		Vet vet;
+    @Override
+    public String vulnFindById(String id) throws DataAccessException {
+        String vet = "";
 		try {
 			Map<String, Object> vet_params = new HashMap<>();
 			vet_params.put("id", id);
-//			vet = this.namedParameterJdbcTemplate.queryForObject(
-//					"SELECT id, first_name, last_name FROM vets WHERE id= :id",
-//					vet_params,
-//					BeanPropertyRowMapper.newInstance(Vet.class));
 
             sqliDetector.verifyInput(id);
 
             // This is vulnerable to SQLi!
             String sql = "SELECT id, first_name, last_name FROM vets WHERE id=" + id;
-            List<Vet> query = this.jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(Vet.class));
-            vet = query.stream().findFirst().orElse(null);
+//            String sql = "SELECT first_name FROM vets WHERE id=" + id;
+//            List<String> query = this.jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(String.class));
+//            List<String> query = this.jdbcTemplate.query(sql, String.class);
+            List<Map<String, Object>> query = jdbcTemplate.queryForList(sql);
+            for (Map<String, Object> row : query) {
+                vet = row.get("id").toString() + row.get("last_name") + row.get("first_name");
+                // TODO: make this a bit more robust
+            }
 
             // we remove specialities to simplify PoC. 2 SQLi seems unnecessary
 //			final List<Specialty> specialties = this.namedParameterJdbcTemplate.query(

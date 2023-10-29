@@ -15,10 +15,12 @@
  */
 package org.springframework.samples.petclinic.rest.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.samples.petclinic.mapper.SpecialtyMapper;
+import org.springframework.samples.petclinic.mapper.StringMapper;
 import org.springframework.samples.petclinic.mapper.VetMapper;
 import org.springframework.samples.petclinic.model.Specialty;
 import org.springframework.samples.petclinic.model.Vet;
@@ -42,14 +44,20 @@ import java.util.List;
 @RequestMapping("api")
 public class VetRestController implements VetsApi {
 
+    @Value("${feature.unsafe}")
+    private boolean unsafe;
+
     private final ClinicService clinicService;
     private final VetMapper vetMapper;
     private final SpecialtyMapper specialtyMapper;
+    private final StringMapper stringMapper;
 
-    public VetRestController(ClinicService clinicService, VetMapper vetMapper, SpecialtyMapper specialtyMapper) {
+    public VetRestController(ClinicService clinicService, VetMapper vetMapper, SpecialtyMapper specialtyMapper,
+                             StringMapper stringMapper) {
         this.clinicService = clinicService;
         this.vetMapper = vetMapper;
         this.specialtyMapper = specialtyMapper;
+        this.stringMapper = stringMapper;
     }
 
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")
@@ -65,17 +73,30 @@ public class VetRestController implements VetsApi {
 
     /**
      * Get Vet
+     *
      * @param vetId: Purposely vulnerable to SQL Injection attack
      * @return ResponseEntity<>
      */
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")
     @Override
-    public ResponseEntity<VetDto> getVet(String vetId)  {
-        Vet vet = this.clinicService.findVetById(vetId);
+    public ResponseEntity<Object> getVet(String vetId)  {
+        Object vet;
+
+        if (unsafe) {
+            vet = this.clinicService.vulnFindVetById(vetId);
+        } else {
+            vet = this.clinicService.findVetById(vetId);
+        }
         if (vet == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(vetMapper.toVetDto(vet), HttpStatus.OK);
+
+        if (vet instanceof Vet vetObject) {
+            return new ResponseEntity<>(vetMapper.toVetDto(vetObject), HttpStatus.OK);
+        } else {
+            String vetString = (String) vet;
+            return new ResponseEntity<>(stringMapper.toStringDto(vetString), HttpStatus.OK);
+        }
     }
 
     /**

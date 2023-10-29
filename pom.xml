@@ -252,49 +252,49 @@
             </plugin>
 
 
-            <plugin>
-                <groupId>org.openapitools</groupId>
-                <artifactId>openapi-generator-maven-plugin</artifactId>
-                <!-- RELEASE_VERSION -->
-                <version>${openapi-generator-maven-plugin.version}</version>
-                <!-- /RELEASE_VERSION -->
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/openapi.yml</inputSpec>
-                            <generatorName>spring</generatorName>
-                            <library>spring-boot</library>
+<!--            <plugin>-->
+<!--                <groupId>org.openapitools</groupId>-->
+<!--                <artifactId>openapi-generator-maven-plugin</artifactId>-->
+<!--                &lt;!&ndash; RELEASE_VERSION &ndash;&gt;-->
+<!--                <version>${openapi-generator-maven-plugin.version}</version>-->
+<!--                &lt;!&ndash; /RELEASE_VERSION &ndash;&gt;-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <goals>-->
+<!--                            <goal>generate</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <inputSpec>${project.basedir}/src/main/resources/openapi.yml</inputSpec>-->
+<!--                            <generatorName>spring</generatorName>-->
+<!--                            <library>spring-boot</library>-->
 
-                            <!-- Only enabling model andopenapi-generator-maven-plugin API generation -->
-                            <modelNameSuffix>Dto</modelNameSuffix>
-                            <apiPackage>org.springframework.samples.petclinic.rest.api</apiPackage>
-                            <generateModels>true</generateModels>
-                            <modelPackage>org.springframework.samples.petclinic.rest.dto</modelPackage>
-                            <!--
-                            <generateSupportingFiles>true</generateSupportingFiles>
-                            <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
-                            -->
-                            <generateApis>true</generateApis>
-                            <configOptions>
-                                <!-- RestController implementation is provided by Petclinic developers -->
-                                <interfaceOnly>true</interfaceOnly>
-                                <!-- Activating Java 8 features -->
-                                <performBeanValidation>true</performBeanValidation>
-                                <dateLibrary>java8</dateLibrary>
-                                <useSpringBoot3>true</useSpringBoot3>
-                                <openApiNullable>false</openApiNullable>
-                                <!-- override the default library to jersey2 -->
-                                <serializationLibrary>jackson</serializationLibrary>
-                                <!-- switch documentation provider to springdoc -->
-                                <documentationProvider>springdoc</documentationProvider>
-                            </configOptions>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+<!--                            &lt;!&ndash; Only enabling model andopenapi-generator-maven-plugin API generation &ndash;&gt;-->
+<!--                            <modelNameSuffix>Dto</modelNameSuffix>-->
+<!--                            <apiPackage>org.springframework.samples.petclinic.rest.api</apiPackage>-->
+<!--                            <generateModels>true</generateModels>-->
+<!--                            <modelPackage>org.springframework.samples.petclinic.rest.dto</modelPackage>-->
+<!--                            &lt;!&ndash;-->
+<!--                            <generateSupportingFiles>true</generateSupportingFiles>-->
+<!--                            <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>-->
+<!--                            &ndash;&gt;-->
+<!--                            <generateApis>true</generateApis>-->
+<!--                            <configOptions>-->
+<!--                                &lt;!&ndash; RestController implementation is provided by Petclinic developers &ndash;&gt;-->
+<!--                                <interfaceOnly>true</interfaceOnly>-->
+<!--                                &lt;!&ndash; Activating Java 8 features &ndash;&gt;-->
+<!--                                <performBeanValidation>true</performBeanValidation>-->
+<!--                                <dateLibrary>java8</dateLibrary>-->
+<!--                                <useSpringBoot3>true</useSpringBoot3>-->
+<!--                                <openApiNullable>false</openApiNullable>-->
+<!--                                &lt;!&ndash; override the default library to jersey2 &ndash;&gt;-->
+<!--                                <serializationLibrary>jackson</serializationLibrary>-->
+<!--                                &lt;!&ndash; switch documentation provider to springdoc &ndash;&gt;-->
+<!--                                <documentationProvider>springdoc</documentationProvider>-->
+<!--                            </configOptions>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>

@@ -120,6 +120,18 @@ public class ClinicServiceImpl implements ClinicService {
 		return vet;
 	}
 
+    @Transactional(readOnly = true)
+    public String vulnFindVetById(String id) throws DataAccessException {
+        String vet = null;
+        try {
+            vet = vetRepository.vulnFindById(id);
+        } catch (ObjectRetrievalFailureException|EmptyResultDataAccessException e) {
+            // just ignore not found exceptions for Jdbc/Jpa realization
+            return null;
+        }
+        return vet;
+    }
+
 	@Override
 	@Transactional(readOnly = true)
 	public Collection<Vet> findAllVets() throws DataAccessException {

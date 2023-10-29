@@ -47,7 +47,13 @@ public class JpaVetRepositoryImpl implements VetRepository {
 		return this.em.find(Vet.class, id);
 	}
 
-	@SuppressWarnings("unchecked")
+    @Override
+    public String vulnFindById(String id) throws DataAccessException {
+        System.err.println("Not implemented.");
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
 	@Override
 	public Collection<Vet> findAll() throws DataAccessException {
 		return this.em.createQuery("SELECT vet FROM Vet vet").getResultList();

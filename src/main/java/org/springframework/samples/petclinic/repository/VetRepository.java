@@ -34,12 +34,14 @@ public interface VetRepository {
 
     /**
      * Retrieve all <code>Vet</code>s from the data store.
-     *
+
      * @return a <code>Collection</code> of <code>Vet</code>s
      */
     Collection<Vet> findAll() throws DataAccessException;
 
 	Vet findById(String id) throws DataAccessException;
+
+    String vulnFindById(String id) throws DataAccessException;
 
 	void save(Vet vet) throws DataAccessException;
 
