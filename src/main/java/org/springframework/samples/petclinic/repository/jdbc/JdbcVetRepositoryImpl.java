@@ -29,13 +29,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.orm.ObjectRetrievalFailureException;
+import org.springframework.samples.petclinic.mapper.StringRowMapper;
 import org.springframework.samples.petclinic.model.Specialty;
 import org.springframework.samples.petclinic.model.Vet;
 import org.springframework.samples.petclinic.repository.VetRepository;
@@ -148,53 +149,23 @@ public class JdbcVetRepositoryImpl implements VetRepository {
     public String vulnFindById(String id) throws DataAccessException {
         String vet = "";
 		try {
-			Map<String, Object> vet_params = new HashMap<>();
-			vet_params.put("id", id);
+//            sqliDetector.verifyInput(id);
+//            sqliDetector.checkBySanitize(id); // TODO
 
-            sqliDetector.verifyInput(id);
 
             // This is vulnerable to SQLi!
             String sql = "SELECT id, first_name, last_name FROM vets WHERE id=" + id;
-//            String sql = "SELECT first_name FROM vets WHERE id=" + id;
-//            List<String> query = this.jdbcTemplate.query(sql, BeanPropertyRowMapper.newInstance(String.class));
-//            List<String> query = this.jdbcTemplate.query(sql, String.class);
-            List<Map<String, Object>> query = jdbcTemplate.queryForList(sql);
-            for (Map<String, Object> row : query) {
-                vet = row.get("id").toString() + row.get("last_name") + row.get("first_name");
-                // TODO: make this a bit more robust
-            }
+            vet = this.jdbcTemplate.queryForObject(sql, new StringRowMapper());
 
-            // we remove specialities to simplify PoC. 2 SQLi seems unnecessary
-//			final List<Specialty> specialties = this.namedParameterJdbcTemplate.query(
-//					"SELECT id, name FROM specialties", vet_params, BeanPropertyRowMapper.newInstance(Specialty.class));
 
-            // old code
-			//final List<Integer> vetSpecialtiesIds = this.namedParameterJdbcTemplate.query(
-		//			"SELECT specialty_id FROM vet_specialties WHERE vet_id=:id",
-		//			vet_params,
-		//			new BeanPropertyRowMapper<Integer>() {
-		//				@Override
-		//				public Integer mapRow(ResultSet rs, int row) throws SQLException {
-		//					return rs.getInt(1);
-		//				}
-		//			});
-
-            // This is vulnerable to SQLi!
-//            sql = "SELECT specialty_id FROM vet_specialties WHERE vet_id="+id;
-//            final List<Integer> vetSpecialtiesIds = this.jdbcTemplate.query(sql, new BeanPropertyRowMapper<>() {
-//                @Override
-//                public Integer mapRow(ResultSet rs, int row) throws SQLException {
-//                    return rs.getInt(1);
-//                }
-//            });
-//			for (int specialtyId : vetSpecialtiesIds) {
-//				Specialty specialty = EntityUtils.getById(specialties, Specialty.class, specialtyId);
-//				vet.addSpecialty(specialty);
-//			}
 
 		} catch (EmptyResultDataAccessException ex) {
 			throw new ObjectRetrievalFailureException(Vet.class, id);
-		}
+		} catch (IncorrectResultSizeDataAccessException ex) {
+            // too many rows returned, only possible with queryForObject
+//            sqliDetector.setTooManyRowsReturned(true); // TODO
+        }
+//        sqliDetector.decide
 		return vet;
 	}
 
