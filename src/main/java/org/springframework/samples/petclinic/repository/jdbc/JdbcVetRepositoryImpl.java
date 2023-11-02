@@ -37,11 +37,12 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.orm.ObjectRetrievalFailureException;
 import org.springframework.samples.petclinic.mapper.StringRowMapper;
+import org.springframework.samples.petclinic.model.PreparedStatementData;
 import org.springframework.samples.petclinic.model.Specialty;
 import org.springframework.samples.petclinic.model.Vet;
 import org.springframework.samples.petclinic.repository.VetRepository;
 import org.springframework.samples.petclinic.util.EntityUtils;
-import org.springframework.samples.petclinic.util.SqlInjectionDetector;
+import org.springframework.samples.petclinic.util.SqlInjectionChecker;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -62,15 +63,15 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 
     private JdbcTemplate jdbcTemplate;
 	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-	private SimpleJdbcInsert insertVet;
-    private SqlInjectionDetector sqliDetector;
+//	private SimpleJdbcInsert insertVet;
+    private final SqlInjectionChecker sqlInjectionChecker;
 
     @Autowired
-    public JdbcVetRepositoryImpl(DataSource dataSource, JdbcTemplate jdbcTemplate, SqlInjectionDetector sqliDetector) {
+    public JdbcVetRepositoryImpl(DataSource dataSource, JdbcTemplate jdbcTemplate, SqlInjectionChecker sqlInjectionChecker) {
         this.jdbcTemplate = jdbcTemplate;
-		this.insertVet = new SimpleJdbcInsert(dataSource).withTableName("vets").usingGeneratedKeyColumns("id");
+//		this.insertVet = new SimpleJdbcInsert(dataSource).withTableName("vets").usingGeneratedKeyColumns("id");
 		this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
-        this.sqliDetector = sqliDetector;
+        this.sqlInjectionChecker = sqlInjectionChecker;
     }
 
     /**
@@ -109,7 +110,7 @@ public class JdbcVetRepositoryImpl implements VetRepository {
     }
 
 	@Override
-	public Vet findById(String id) throws DataAccessException {
+	public Vet findById(int id) throws DataAccessException {
         Vet vet;
         try {
             Map<String, Object> vet_params = new HashMap<>();
@@ -147,25 +148,32 @@ public class JdbcVetRepositoryImpl implements VetRepository {
      */
     @Override
     public String vulnFindById(String id) throws DataAccessException {
+        boolean sqliParamCheck = false;
+        boolean sqliTooManyRows = false;
+
         String vet = "";
 		try {
-//            sqliDetector.verifyInput(id);
-//            sqliDetector.checkBySanitize(id); // TODO
-
+//            Map<String, Object> vet_params = new HashMap<>();
+//            vet_params.put("id", id);
+            PreparedStatementData preparedStatementData = new PreparedStatementData(Integer.class, "id", id);
+            String preparedSql = "SELECT id, first_name, last_name FROM vets WHERE id= :id";
+//            this.namedParameterJdbcTemplate.queryForObject(preparedSql, vet_params,
+//                BeanPropertyRowMapper.newInstance(Vet.class));
 
             // This is vulnerable to SQLi!
             String sql = "SELECT id, first_name, last_name FROM vets WHERE id=" + id;
+            sqliParamCheck = sqlInjectionChecker.detectByPreparedStatement(sql, preparedSql, preparedStatementData);
+
             vet = this.jdbcTemplate.queryForObject(sql, new StringRowMapper());
-
-
 
 		} catch (EmptyResultDataAccessException ex) {
 			throw new ObjectRetrievalFailureException(Vet.class, id);
 		} catch (IncorrectResultSizeDataAccessException ex) {
             // too many rows returned, only possible with queryForObject
-//            sqliDetector.setTooManyRowsReturned(true); // TODO
+            sqliTooManyRows = true;
+            // don't throw exception
         }
-//        sqliDetector.decide
+        sqlInjectionChecker.verify(sqliParamCheck, sqliTooManyRows);
 		return vet;
 	}
 

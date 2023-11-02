@@ -43,7 +43,7 @@ public class JpaVetRepositoryImpl implements VetRepository {
 
 
 	@Override
-	public Vet findById(String id) throws DataAccessException {
+	public Vet findById(int id) throws DataAccessException {
 		return this.em.find(Vet.class, id);
 	}
 

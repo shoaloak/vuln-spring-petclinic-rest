@@ -85,7 +85,7 @@ public class VetRestController implements VetsApi {
         if (unsafe) {
             vet = this.clinicService.vulnFindVetById(vetId);
         } else {
-            vet = this.clinicService.findVetById(vetId);
+            vet = this.clinicService.findVetById(Integer.parseInt(vetId));
         }
         if (vet == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -117,7 +117,7 @@ public class VetRestController implements VetsApi {
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")
     @Override
     public ResponseEntity<VetDto> updateVet(String vetId,VetDto vetDto)  {
-        Vet currentVet = this.clinicService.findVetById(vetId);
+        Vet currentVet = this.clinicService.findVetById(Integer.parseInt(vetId));
         if (currentVet == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -135,7 +135,7 @@ public class VetRestController implements VetsApi {
     @Transactional
     @Override
     public ResponseEntity<VetDto> deleteVet(String vetId) {
-        Vet vet = this.clinicService.findVetById(vetId);
+        Vet vet = this.clinicService.findVetById(Integer.parseInt(vetId));
         if (vet == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

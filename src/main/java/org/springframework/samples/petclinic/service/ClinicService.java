@@ -45,7 +45,7 @@ public interface ClinicService {
 	void saveVisit(Visit visit) throws DataAccessException;
 	void deleteVisit(Visit visit) throws DataAccessException;
 
-	Vet findVetById(String id) throws DataAccessException;
+	Vet findVetById(int id) throws DataAccessException;
     String vulnFindVetById(String id) throws DataAccessException;
 	Collection<Vet> findVets() throws DataAccessException;
 	Collection<Vet> findAllVets() throws DataAccessException;

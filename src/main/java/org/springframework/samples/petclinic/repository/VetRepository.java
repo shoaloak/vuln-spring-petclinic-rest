@@ -39,7 +39,7 @@ public interface VetRepository {
      */
     Collection<Vet> findAll() throws DataAccessException;
 
-	Vet findById(String id) throws DataAccessException;
+	Vet findById(int id) throws DataAccessException;
 
     String vulnFindById(String id) throws DataAccessException;
 
