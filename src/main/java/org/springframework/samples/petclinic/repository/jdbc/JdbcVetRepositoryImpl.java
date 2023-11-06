@@ -156,12 +156,12 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 //            Map<String, Object> vet_params = new HashMap<>();
 //            vet_params.put("id", id);
             PreparedStatementData preparedStatementData = new PreparedStatementData(Integer.class, "id", id);
-            String preparedSql = "SELECT id, first_name, last_name FROM vets WHERE id= :id";
+            String preparedSql = "SELECT id, first_name, last_name FROM vets WHERE id = ?";
 //            this.namedParameterJdbcTemplate.queryForObject(preparedSql, vet_params,
 //                BeanPropertyRowMapper.newInstance(Vet.class));
 
             // This is vulnerable to SQLi!
-            String sql = "SELECT id, first_name, last_name FROM vets WHERE id=" + id;
+            String sql = "SELECT id, first_name, last_name FROM vets WHERE id = " + id;
             sqliParamCheck = sqlInjectionChecker.detectByPreparedStatement(sql, preparedSql, preparedStatementData);
 
             vet = this.jdbcTemplate.queryForObject(sql, new StringRowMapper());

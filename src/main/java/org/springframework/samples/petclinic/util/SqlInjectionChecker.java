@@ -63,16 +63,13 @@ public class SqlInjectionChecker {
     /**
      * This method checks for SQLi by comparing the query with the escaped query.
      * @param query     The query that is expected to be executed
-     * @param preparedSql The query with the parameters replaced by '?'
+     * @param statement The query with the parameters replaced by '?'
      * @param preparedStatementData    The parameters to be inserted into the query
      * @return          True if the query is different from the escaped query, false otherwise
      */
-    public boolean detectByPreparedStatement(String query, String preparedSql, PreparedStatementData preparedStatementData) {
+    public boolean detectByPreparedStatement(String query, String statement, PreparedStatementData preparedStatementData) {
         try {
-            String escapedQuery = createPreparedStatement(preparedSql, preparedStatementData);
-            // HikariProxyPreparedStatement@1054499273 wrapping org.hsqldb.jdbc.JDBCPreparedStatement@18ab83cb[sql=[SELECT id, first_name, last_name FROM vets WHERE id= :id], parameters=[[1]]]
-            // TODO: HSSQLDB does not implement toString() in a way that includes the SQL query
-            // Or maybe it's because of HikariCP?
+            String escapedQuery = createPreparedStatement(statement, preparedStatementData);
             return !query.equals(escapedQuery);
         } catch (SQLException e) {
             logger.error("Error while checking for SQL injection", e);
@@ -96,8 +93,6 @@ public class SqlInjectionChecker {
         return false;
     }
 
-    // stuff necessary for the escaped SQL query extraction
-
     /**
      * This method extracts the escaped SQL query from the PreparedStatement.
      * This only works if the JDBC driver implements toString() in a way that
@@ -106,7 +101,8 @@ public class SqlInjectionChecker {
      * @return                  The escaped SQL query
      */
     public String extractEscapedQuery(PreparedStatement preparedStatement) {
-        return preparedStatement.toString();
+        String escapedQuery = preparedStatement.toString();
+        return escapedQuery.substring(escapedQuery.lastIndexOf(':') + 2);
     }
 
     private String createPreparedStatement(String sql, PreparedStatementData preparedStatementData) throws SQLException {
@@ -135,7 +131,15 @@ public class SqlInjectionChecker {
                 return preparedStatement;
             };
 
-            return extractEscapedQuery(preparedStatementCreator.createPreparedStatement(connection));
+            PreparedStatement ps = preparedStatementCreator.createPreparedStatement(connection);
+
+            // Use reflection to access the delegate field, i.e., real PreparedStatement
+//            Field field = hikariProxyStatement.getClass().getDeclaredField("delegate");
+//            field.setAccessible(true);
+//            PreparedStatement ps = (PreparedStatement) field.get(hikariProxyStatement);
+            // doesn't work, accesses the wrong class somehow
+
+            return extractEscapedQuery(ps);
         }
     }
 }
