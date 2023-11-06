@@ -17,11 +17,7 @@ package org.springframework.samples.petclinic.repository.jdbc;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.sql.DataSource;
 
@@ -34,10 +30,9 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.orm.ObjectRetrievalFailureException;
 import org.springframework.samples.petclinic.mapper.StringRowMapper;
-import org.springframework.samples.petclinic.model.PreparedStatementData;
+import org.springframework.samples.petclinic.model.PreparedStatementParameter;
 import org.springframework.samples.petclinic.model.Specialty;
 import org.springframework.samples.petclinic.model.Vet;
 import org.springframework.samples.petclinic.repository.VetRepository;
@@ -153,16 +148,13 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 
         String vet = "";
 		try {
-//            Map<String, Object> vet_params = new HashMap<>();
-//            vet_params.put("id", id);
-            PreparedStatementData preparedStatementData = new PreparedStatementData(Integer.class, "id", id);
+            Set<PreparedStatementParameter> parameters = new LinkedHashSet<>();
+            parameters.add(new PreparedStatementParameter(Integer.class, "id", id));
             String preparedSql = "SELECT id, first_name, last_name FROM vets WHERE id = ?";
-//            this.namedParameterJdbcTemplate.queryForObject(preparedSql, vet_params,
-//                BeanPropertyRowMapper.newInstance(Vet.class));
 
             // This is vulnerable to SQLi!
-            String sql = "SELECT id, first_name, last_name FROM vets WHERE id = " + id;
-            sqliParamCheck = sqlInjectionChecker.detectByPreparedStatement(sql, preparedSql, preparedStatementData);
+            String sql = "SELECT id, first_name, last_name FROM vets WHERE id = '" + id + "'";
+            sqliParamCheck = sqlInjectionChecker.detectByPreparedStatement(sql, preparedSql, parameters);
 
             vet = this.jdbcTemplate.queryForObject(sql, new StringRowMapper());
 

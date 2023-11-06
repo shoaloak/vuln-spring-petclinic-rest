@@ -3,23 +3,24 @@ package org.springframework.samples.petclinic.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
-import org.springframework.samples.petclinic.model.PreparedStatementData;
+import org.springframework.samples.petclinic.model.PreparedStatementParameter;
 import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.SQLSyntaxErrorException;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 @Component
 public class SqlInjectionChecker {
-
+    @Value("${feature.typeEscape}")
+    private boolean typeEscape;
     private final Logger logger = LoggerFactory.getLogger(SqlInjectionChecker.class);
-
     private final ShutdownHandler shutdownHandler;
     private final JdbcTemplate jdbcTemplate;
 
@@ -64,13 +65,12 @@ public class SqlInjectionChecker {
      * This method checks for SQLi by comparing the query with the escaped query.
      * @param query     The query that is expected to be executed
      * @param statement The query with the parameters replaced by '?'
-     * @param preparedStatementData    The parameters to be inserted into the query
+     * @param parameters    The parameters to be inserted into the query
      * @return          True if the query is different from the escaped query, false otherwise
      */
-    public boolean detectByPreparedStatement(String query, String statement, PreparedStatementData preparedStatementData) {
+    public boolean detectByPreparedStatement(String query, String statement, Set<PreparedStatementParameter> parameters) {
         try {
-            PreparedStatement ps = createPreparedStatement(statement, preparedStatementData);
-            String escapedQuery = extractEscapedQuery(ps);
+            String escapedQuery = createEscapedQuery(statement, parameters);
             return !query.equals(escapedQuery);
         } catch (SQLException e) {
             logger.error("Error while checking for SQL injection", e);
@@ -102,11 +102,17 @@ public class SqlInjectionChecker {
      * @return                  The escaped SQL query
      */
     public String extractEscapedQuery(PreparedStatement preparedStatement) {
+        // Use reflection to access the delegate field, i.e., real PreparedStatement
+//            Field field = preparedStatement.getClass().getDeclaredField("delegate");
+//            field.setAccessible(true);
+//            PreparedStatement unwrappedPreparedStatement = (PreparedStatement) field.get(preparedStatement);
+        // This doesn't work somehow, accesses the wrong class
+
         String escapedQuery = preparedStatement.toString();
         return escapedQuery.substring(escapedQuery.lastIndexOf(':') + 2);
     }
 
-    private PreparedStatement createPreparedStatement(String sql, PreparedStatementData preparedStatementData) throws SQLException {
+    private String createEscapedQuery(String sql, Set<PreparedStatementParameter> parameters) throws SQLException {
         // Get a connection from the DataSource and also close it when done
         try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
 
@@ -115,31 +121,29 @@ public class SqlInjectionChecker {
                 // Create the PreparedStatement with the given SQL
                 PreparedStatement preparedStatement = connection1.prepareStatement(sql);
 
-                // Set the parameters in the PreparedStatement
                 int i = 1;
-                for (Map.Entry<String, Map.Entry<Class<?>, Object>> param : preparedStatementData.getParametersWithTypes().entrySet()) {
-                    // Dynamically cast the parameter to the original type
-                    Class<?> theType = param.getValue().getKey();
+                // Set the parameters in the PreparedStatement
+                for (PreparedStatementParameter param : parameters) {
                     Object value;
-                    if (theType.equals(Integer.class)) {
-                        value = Integer.parseInt((String) param.getValue().getValue());
+                    if (this.typeEscape) {
+                        // Dynamically cast the parameter to the original type
+                        if (param.type().equals(Integer.class)) {
+                            value = Integer.parseInt((String) param.value());
+                        } else {
+                            value = param.type().cast(param.value());
+                        }
                     } else {
-                        value = theType.cast(param.getValue().getValue());
+                        // "just" set the parameter as an Object
+                        value = param.value();
                     }
-
                     preparedStatement.setObject(i++, value);
                 }
                 return preparedStatement;
             };
 
-            // Use reflection to access the delegate field, i.e., real PreparedStatement
-//            PreparedStatement hikariProxyStatement = preparedStatementCreator.createPreparedStatement(connection);
-//            Field field = hikariProxyStatement.getClass().getDeclaredField("delegate");
-//            field.setAccessible(true);
-//            PreparedStatement ps = (PreparedStatement) field.get(hikariProxyStatement);
-            // This doesn't work somehow, accesses the wrong class
-
-            return preparedStatementCreator.createPreparedStatement(connection);
+            PreparedStatement ps = preparedStatementCreator.createPreparedStatement(connection);
+            // Make sure to extract the query before the connection is closed.
+            return extractEscapedQuery(ps);
         }
     }
 }
