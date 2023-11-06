@@ -69,7 +69,8 @@ public class SqlInjectionChecker {
      */
     public boolean detectByPreparedStatement(String query, String statement, PreparedStatementData preparedStatementData) {
         try {
-            String escapedQuery = createPreparedStatement(statement, preparedStatementData);
+            PreparedStatement ps = createPreparedStatement(statement, preparedStatementData);
+            String escapedQuery = extractEscapedQuery(ps);
             return !query.equals(escapedQuery);
         } catch (SQLException e) {
             logger.error("Error while checking for SQL injection", e);
@@ -105,7 +106,7 @@ public class SqlInjectionChecker {
         return escapedQuery.substring(escapedQuery.lastIndexOf(':') + 2);
     }
 
-    private String createPreparedStatement(String sql, PreparedStatementData preparedStatementData) throws SQLException {
+    private PreparedStatement createPreparedStatement(String sql, PreparedStatementData preparedStatementData) throws SQLException {
         // Get a connection from the DataSource and also close it when done
         try (Connection connection = Objects.requireNonNull(jdbcTemplate.getDataSource()).getConnection()) {
 
@@ -131,15 +132,14 @@ public class SqlInjectionChecker {
                 return preparedStatement;
             };
 
-            PreparedStatement ps = preparedStatementCreator.createPreparedStatement(connection);
-
             // Use reflection to access the delegate field, i.e., real PreparedStatement
+//            PreparedStatement hikariProxyStatement = preparedStatementCreator.createPreparedStatement(connection);
 //            Field field = hikariProxyStatement.getClass().getDeclaredField("delegate");
 //            field.setAccessible(true);
 //            PreparedStatement ps = (PreparedStatement) field.get(hikariProxyStatement);
-            // doesn't work, accesses the wrong class somehow
+            // This doesn't work somehow, accesses the wrong class
 
-            return extractEscapedQuery(ps);
+            return preparedStatementCreator.createPreparedStatement(connection);
         }
     }
 }
