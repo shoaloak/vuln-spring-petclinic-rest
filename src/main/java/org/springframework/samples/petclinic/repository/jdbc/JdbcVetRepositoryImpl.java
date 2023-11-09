@@ -62,8 +62,8 @@ public class JdbcVetRepositoryImpl implements VetRepository {
     private final SqlInjectionChecker sqlInjectionChecker;
 
     @Autowired
-    public JdbcVetRepositoryImpl(DataSource dataSource, JdbcTemplate jdbcTemplate, SqlInjectionChecker sqlInjectionChecker) {
-        this.jdbcTemplate = jdbcTemplate;
+    public JdbcVetRepositoryImpl(DataSource dataSource, SqlInjectionChecker sqlInjectionChecker) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
 //		this.insertVet = new SimpleJdbcInsert(dataSource).withTableName("vets").usingGeneratedKeyColumns("id");
 		this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.sqlInjectionChecker = sqlInjectionChecker;

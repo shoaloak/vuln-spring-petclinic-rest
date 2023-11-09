@@ -27,13 +27,14 @@ import org.springframework.samples.petclinic.model.Specialty;
  */
 
 public interface SpecialtyRepository {
-	
+
 	Specialty findById(int id) throws DataAccessException;
-	
+    String vulnFindById(String id) throws DataAccessException;
+
 	Collection<Specialty> findAll() throws DataAccessException;
-	
+
 	void save(Specialty specialty) throws DataAccessException;
-	
+
 	void delete(Specialty specialty) throws DataAccessException;
 
 }

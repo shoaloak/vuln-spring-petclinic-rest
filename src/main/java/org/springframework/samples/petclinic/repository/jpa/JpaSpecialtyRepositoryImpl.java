@@ -44,6 +44,12 @@ public class JpaSpecialtyRepositoryImpl implements SpecialtyRepository {
 		return this.em.find(Specialty.class, id);
 	}
 
+    @Override
+    public String vulnFindById(String id) {
+        System.err.println("Not implemented.");
+        return null;
+    }
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public Collection<Specialty> findAll() throws DataAccessException {

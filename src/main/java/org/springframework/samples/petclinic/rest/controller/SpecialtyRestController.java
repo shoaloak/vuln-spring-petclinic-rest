@@ -16,10 +16,12 @@
 
 package org.springframework.samples.petclinic.rest.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.samples.petclinic.mapper.SpecialtyMapper;
+import org.springframework.samples.petclinic.mapper.StringMapper;
 import org.springframework.samples.petclinic.model.Specialty;
 import org.springframework.samples.petclinic.rest.api.SpecialtiesApi;
 import org.springframework.samples.petclinic.rest.dto.SpecialtyDto;
@@ -41,13 +43,18 @@ import java.util.List;
 @RequestMapping("api")
 public class SpecialtyRestController implements SpecialtiesApi {
 
+    @Value("${feature.unsafe}")
+    private boolean unsafe;
+
     private final ClinicService clinicService;
-
     private final SpecialtyMapper specialtyMapper;
+    private final StringMapper stringMapper;
 
-    public SpecialtyRestController(ClinicService clinicService, SpecialtyMapper specialtyMapper) {
+    public SpecialtyRestController(ClinicService clinicService, SpecialtyMapper specialtyMapper,
+                                   StringMapper stringMapper) {
         this.clinicService = clinicService;
         this.specialtyMapper = specialtyMapper;
+        this.stringMapper = stringMapper;
     }
 
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")
@@ -63,12 +70,25 @@ public class SpecialtyRestController implements SpecialtiesApi {
 
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")
     @Override
-    public ResponseEntity<SpecialtyDto> getSpecialty(Integer specialtyId) {
-        Specialty specialty = this.clinicService.findSpecialtyById(specialtyId);
+    public ResponseEntity<Object> getSpecialty(String specialtyId) {
+        Object specialty;
+
+        if (unsafe) {
+            specialty = this.clinicService.vulnFindSpecialtyById(specialtyId);
+        } else {
+            specialty = this.clinicService.findSpecialtyById(Integer.parseInt(specialtyId));
+        }
         if (specialty == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>(specialtyMapper.toSpecialtyDto(specialty), HttpStatus.OK);
+
+        if (specialty instanceof Specialty specialtyObject) {
+            return new ResponseEntity<>(specialtyMapper.toSpecialtyDto(specialtyObject), HttpStatus.OK);
+        } else {
+            String specialtyString = (String) specialty;
+            return new ResponseEntity<>(stringMapper.toStringDto(specialtyString), HttpStatus.OK);
+        }
+
     }
 
     @PreAuthorize("hasRole(@roles.VET_ADMIN)")

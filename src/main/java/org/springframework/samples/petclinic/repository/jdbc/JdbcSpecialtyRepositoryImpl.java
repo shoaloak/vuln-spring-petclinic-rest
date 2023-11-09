@@ -16,9 +16,7 @@
 
 package org.springframework.samples.petclinic.repository.jdbc;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import javax.sql.DataSource;
 
@@ -26,13 +24,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.orm.ObjectRetrievalFailureException;
+import org.springframework.samples.petclinic.mapper.StringRowMapper;
+import org.springframework.samples.petclinic.model.PreparedStatementParameter;
 import org.springframework.samples.petclinic.model.Specialty;
 import org.springframework.samples.petclinic.repository.SpecialtyRepository;
+import org.springframework.samples.petclinic.util.SqlInjectionChecker;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -43,13 +46,15 @@ import org.springframework.stereotype.Repository;
 @Repository
 @Profile("jdbc")
 public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
-	
+
+    private JdbcTemplate jdbcTemplate;
 	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-	
 	private SimpleJdbcInsert insertSpecialty;
+    private SqlInjectionChecker sqlInjectionChecker;
 
 	@Autowired
-	public JdbcSpecialtyRepositoryImpl(DataSource dataSource) {
+	public JdbcSpecialtyRepositoryImpl(DataSource dataSource, SqlInjectionChecker sqlInjectionChecker) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
 		this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
 		this.insertSpecialty = new SimpleJdbcInsert(dataSource)
 	            .withTableName("specialties")
@@ -63,7 +68,7 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
             Map<String, Object> params = new HashMap<>();
             params.put("id", id);
             specialty = this.namedParameterJdbcTemplate.queryForObject(
-                "SELECT id, name FROM specialties WHERE id= :id",
+                "SELECT id, name FROM specialties WHERE id= :id AND active IS TRUE",
                 params,
                 BeanPropertyRowMapper.newInstance(Specialty.class));
         } catch (EmptyResultDataAccessException ex) {
@@ -71,6 +76,37 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
         }
         return specialty;
 	}
+
+    /**
+     * Vulnerable to SQLi
+     * @param id
+     * @return
+     */
+    @Override
+    public String vulnFindById(String id) {
+        boolean sqliParamCheck = false;
+        boolean sqliTooManyRows = false;
+
+        String specialty = "";
+        try {
+            Set<PreparedStatementParameter> parameters = new LinkedHashSet<>();
+            parameters.add(new PreparedStatementParameter(Integer.class, "id", id));
+            String preparedSql = "SELECT id, name FROM specialties WHERE id= ? AND active IS TRUE";
+
+            // This is vulnerable to SQLi!
+            String sql = "SELECT id, name FROM specialties WHERE id= '" + id + "' AND active IS TRUE";
+            sqliParamCheck = sqlInjectionChecker.detectByPreparedStatement(sql, preparedSql, parameters);
+
+            specialty = this.jdbcTemplate.queryForObject(sql, new StringRowMapper());
+
+        } catch (EmptyResultDataAccessException ex) {
+            throw new ObjectRetrievalFailureException(Specialty.class, id);
+        } catch (IncorrectResultSizeDataAccessException e) {
+            sqliTooManyRows = true;
+        }
+        sqlInjectionChecker.verify(sqliParamCheck, sqliTooManyRows);
+        return specialty;
+    }
 
 	@Override
 	public Collection<Specialty> findAll() throws DataAccessException {
