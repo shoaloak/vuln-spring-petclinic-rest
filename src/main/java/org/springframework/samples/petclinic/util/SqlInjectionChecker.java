@@ -19,7 +19,9 @@ import java.util.Set;
 
 @Component
 public class SqlInjectionChecker {
-    @Value("${feature.typeEscape}")
+    @Value("${feature.sqli.detection}")
+    private boolean active;
+    @Value("${feature.sqli.typeEscape}")
     private boolean typeEscape;
     private final Logger logger = LoggerFactory.getLogger(SqlInjectionChecker.class);
     private final ShutdownHandler shutdownHandler;
@@ -32,6 +34,10 @@ public class SqlInjectionChecker {
     }
 
     public void verify(boolean... results) {
+        if (!active) {
+            return;
+        }
+
         for (boolean result : results) {
             if (result) {
                 logger.info("SQL injection detected!");
@@ -45,6 +51,10 @@ public class SqlInjectionChecker {
      */
     @Deprecated
     public boolean detectByKeywords(String input) {
+        if (!active) {
+            return false;
+        }
+
         // Define a list of common SQL injection keywords
         String[] sqlKeywords = {"SELECT", "INSERT", "UPDATE", "DELETE", "UNION", "DROP", "ALTER", "EXEC", "TRUNCATE",
                                 "OR"};
@@ -70,6 +80,10 @@ public class SqlInjectionChecker {
      * @return          True if the query is different from the escaped query, false otherwise
      */
     public boolean detectByPreparedStatement(String query, String statement, Set<PreparedStatementParameter> parameters) {
+        if (!active) {
+            return false;
+        }
+
         try {
             String escapedQuery = createEscapedQuery(statement, parameters);
             return !query.equals(escapedQuery);
