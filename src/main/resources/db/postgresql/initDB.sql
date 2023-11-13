@@ -13,7 +13,8 @@ ALTER SEQUENCE vets_id_seq RESTART WITH 100;
 CREATE TABLE IF NOT EXISTS specialties (
   id SERIAL,
   name VARCHAR(80),
-  CONSTRAINT pk_specialties PRIMARY KEY (id)
+  CONSTRAINT pk_specialties PRIMARY KEY (id),
+  active BOOLEAN DEFAULT TRUE
 );
 
 CREATE INDEX IF NOT EXISTS idx_specialties_name ON specialties (name);

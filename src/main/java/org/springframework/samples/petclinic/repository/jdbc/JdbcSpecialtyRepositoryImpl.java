@@ -59,6 +59,7 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
 		this.insertSpecialty = new SimpleJdbcInsert(dataSource)
 	            .withTableName("specialties")
 	            .usingGeneratedKeyColumns("id");
+        this.sqlInjectionChecker = sqlInjectionChecker;
 	}
 
 	@Override

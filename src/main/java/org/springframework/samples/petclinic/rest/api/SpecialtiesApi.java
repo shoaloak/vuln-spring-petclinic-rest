@@ -184,7 +184,7 @@ public interface SpecialtiesApi {
         produces = { "application/json" }
     )
     default ResponseEntity<Object> getSpecialty(
-        @Min(0) @Parameter(name = "specialtyId", description = "The ID of the speciality.", required = true, in = ParameterIn.PATH) @PathVariable("specialtyId") String specialtyId
+        @Parameter(name = "specialtyId", description = "The ID of the speciality.", required = true, in = ParameterIn.PATH) @PathVariable("specialtyId") String specialtyId
     ) {
         getRequest().ifPresent(request -> {
             for (MediaType mediaType: MediaType.parseMediaTypes(request.getHeader("Accept"))) {
