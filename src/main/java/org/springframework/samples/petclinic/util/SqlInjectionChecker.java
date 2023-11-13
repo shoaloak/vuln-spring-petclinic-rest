@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.samples.petclinic.model.PreparedStatementParameter;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -79,17 +80,17 @@ public class SqlInjectionChecker {
                 String sqlState = e.getSQLState();
                 if (sqlState != null && sqlState.equals("22018")) {
                     // This SQLState usually indicates an incompatible data type in conversion
-                    // Handle the exception accordingly
-                    System.out.println("Incompatible data type in conversion error");
+                    logger.error("Incompatible type conversion error, assuming SQL injection");
                     return true;
                 } else {
                     // Other SQLSyntaxErrorException handling
-                    System.out.println("Other SQLSyntaxErrorException handling");
+                    logger.error("Other SQLSyntaxErrorException: " + sqlState);
                 }
             } else {
-                // Other SQLException handling
-                System.out.println("Other SQLException handling");
+                logger.error("Other SQLException handling");
             }
+        } catch (IllegalStateException e) {
+            logger.error("Error while extracting escaped query", e);
         }
         return false;
     }
@@ -97,19 +98,33 @@ public class SqlInjectionChecker {
     /**
      * This method extracts the escaped SQL query from the PreparedStatement.
      * This only works if the JDBC driver implements toString() in a way that
-     * includes the SQL query, e.g., Postgres or MySQL.
+     * includes the escaped SQL query, i.e., Postgres. MySQL does have a toString(),
+     * but this doesn't escape the query.
      * @param preparedStatement The PreparedStatement to extract the escaped SQL query from
      * @return                  The escaped SQL query
      */
-    public String extractEscapedQuery(PreparedStatement preparedStatement) {
-        // Use reflection to access the delegate field, i.e., real PreparedStatement
-//            Field field = preparedStatement.getClass().getDeclaredField("delegate");
-//            field.setAccessible(true);
-//            PreparedStatement unwrappedPreparedStatement = (PreparedStatement) field.get(preparedStatement);
-        // This doesn't work somehow, accesses the wrong class
+    public String extractEscapedQuery(PreparedStatement preparedStatement) throws IllegalStateException {
+        String escapedQuery = "";
 
-        String escapedQuery = preparedStatement.toString();
-        return escapedQuery.substring(escapedQuery.lastIndexOf(':') + 2);
+        Class<?> preparedStatementClass = preparedStatement.getClass();
+        while (preparedStatementClass != null) {
+            try {
+                // Use reflection to access the delegate field, i.e., real PreparedStatement
+                Field field = preparedStatementClass.getDeclaredField("delegate");
+                field.setAccessible(true);
+                PreparedStatement unwrappedPreparedStatement = (PreparedStatement) field.get(preparedStatement);
+                escapedQuery = unwrappedPreparedStatement.toString();
+                break;
+            } catch (NoSuchFieldException | IllegalAccessException ignored) {
+                preparedStatementClass = preparedStatementClass.getSuperclass();
+            }
+        }
+
+        if (escapedQuery.isEmpty()){
+            throw new IllegalStateException("Could not extract escaped query from PreparedStatement");
+        }
+
+        return escapedQuery;
     }
 
     private String createEscapedQuery(String sql, Set<PreparedStatementParameter> parameters) throws SQLException {
