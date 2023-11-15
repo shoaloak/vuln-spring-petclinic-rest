@@ -30,6 +30,7 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.orm.ObjectRetrievalFailureException;
 import org.springframework.samples.petclinic.mapper.StringRowMapper;
 import org.springframework.samples.petclinic.model.PreparedStatementParameter;
@@ -58,13 +59,13 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 
     private JdbcTemplate jdbcTemplate;
 	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-//	private SimpleJdbcInsert insertVet;
+	private SimpleJdbcInsert insertVet;
     private final SqlInjectionChecker sqlInjectionChecker;
 
     @Autowired
     public JdbcVetRepositoryImpl(DataSource dataSource, SqlInjectionChecker sqlInjectionChecker) {
         this.jdbcTemplate = new JdbcTemplate(dataSource);
-//		this.insertVet = new SimpleJdbcInsert(dataSource).withTableName("vets").usingGeneratedKeyColumns("id");
+		this.insertVet = new SimpleJdbcInsert(dataSource).withTableName("vets").usingGeneratedKeyColumns("id");
 		this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
         this.sqlInjectionChecker = sqlInjectionChecker;
     }
@@ -171,32 +172,16 @@ public class JdbcVetRepositoryImpl implements VetRepository {
 
 	@Override
 	public void save(Vet vet) throws DataAccessException {
-		BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(vet);
-		if (vet.isNew()) {
-//			Number newKey = this.insertVet.executeAndReturnKey(parameterSource);
-            // INSERT SQLi
-//            String sql = "INSERT INTO vets (first_name, last_name) VALUES ('"+vet.getFirstName()+"','"+vet.getLastName()+"')";
-//            this.jdbcTemplate.update(sql);
-            String sql = "INSERT INTO vets (first_name, last_name) VALUES (?, ?)";
-            this.jdbcTemplate.update(sql, vet.getFirstName(), vet.getLastName());
-
-            // firstName is vulnerable to SQLi!
-            // lastname still protected by the OpenAPI pattern
-            sql = "SELECT id FROM vets WHERE first_name='" + vet.getFirstName() + "' AND last_name='" + vet.getLastName() + "'";
-            List<Long> idList = this.jdbcTemplate.query(sql, (rs, rowNum) -> rs.getLong("id"));
-            if (idList.isEmpty()) {
-                System.err.println("Error: could not find new vet id");
-                return;
-            }
-            Long newKey = idList.get(0);
-
-			vet.setId(newKey.intValue());
-			updateVetSpecialties(vet);
-		} else {
-			this.namedParameterJdbcTemplate
-					.update("UPDATE vets SET first_name=:firstName, last_name=:lastName WHERE id=:id", parameterSource);
-			updateVetSpecialties(vet);
-		}
+        BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(vet);
+        if (vet.isNew()) {
+            Number newKey = this.insertVet.executeAndReturnKey(parameterSource);
+            vet.setId(newKey.intValue());
+            updateVetSpecialties(vet);
+        } else {
+            this.namedParameterJdbcTemplate
+                .update("UPDATE vets SET first_name=:firstName, last_name=:lastName WHERE id=:id", parameterSource);
+            updateVetSpecialties(vet);
+        }
 	}
 
 	@Override
