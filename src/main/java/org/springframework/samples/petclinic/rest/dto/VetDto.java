@@ -29,7 +29,7 @@ public class VetDto {
   private String lastName;
 
   @JsonProperty("specialties")
-  @Valid
+//  @Valid
   private List<SpecialtyDto> specialties = new ArrayList<>();
 
   @JsonProperty("id")
@@ -44,7 +44,7 @@ public class VetDto {
    * The first name of the vet.
    * @return firstName
   */
-  @NotNull @Size(min = 1, max = 99)
+//  @NotNull @Size(min = 1, max = 99)
   @Schema(name = "firstName", example = "James", description = "The first name of the vet.", requiredMode = Schema.RequiredMode.REQUIRED)
   public String getFirstName() {
     return firstName;
@@ -63,7 +63,7 @@ public class VetDto {
    * The last name of the vet.
    * @return lastName
   */
-  @NotNull @Pattern(regexp = "^[a-zA-Z]*$") @Size(min = 1, max = 30)
+//  @NotNull @Pattern(regexp = "^[a-zA-Z]*$") @Size(min = 1, max = 30)
   @Schema(name = "lastName", example = "Carter", description = "The last name of the vet.", requiredMode = Schema.RequiredMode.REQUIRED)
   public String getLastName() {
     return lastName;
@@ -90,7 +90,7 @@ public class VetDto {
    * The specialties of the vet.
    * @return specialties
   */
-  @NotNull @Valid
+//  @NotNull @Valid
   @Schema(name = "specialties", description = "The specialties of the vet.", requiredMode = Schema.RequiredMode.REQUIRED)
   public List<SpecialtyDto> getSpecialties() {
     return specialties;
@@ -110,7 +110,7 @@ public class VetDto {
    * minimum: 0
    * @return id
   */
-  @Min(0)
+//  @Min(0)
   @Schema(name = "id", accessMode = Schema.AccessMode.READ_ONLY, example = "1", description = "The ID of the vet.", requiredMode = Schema.RequiredMode.REQUIRED)
   public Integer getId() {
     return id;
