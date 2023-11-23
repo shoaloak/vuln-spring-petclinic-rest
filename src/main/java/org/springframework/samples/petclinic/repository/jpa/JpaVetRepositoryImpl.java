@@ -15,6 +15,8 @@
  */
 package org.springframework.samples.petclinic.repository.jpa;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataAccessException;
 import org.springframework.samples.petclinic.model.Vet;
@@ -41,6 +43,7 @@ public class JpaVetRepositoryImpl implements VetRepository {
     @PersistenceContext
     private EntityManager em;
 
+    private final Logger logger = LoggerFactory.getLogger(JpaVetRepositoryImpl.class);
 
 	@Override
 	public Vet findById(int id) throws DataAccessException {
@@ -48,8 +51,8 @@ public class JpaVetRepositoryImpl implements VetRepository {
 	}
 
     @Override
-    public String vulnFindById(String id) throws DataAccessException {
-        System.err.println("Not implemented.");
+    public String vulnFindById(String id) {
+        logger.error("Not implemented.");
         return null;
     }
 
@@ -67,6 +70,11 @@ public class JpaVetRepositoryImpl implements VetRepository {
             this.em.merge(vet);
         }
 	}
+
+    @Override
+    public void vulnSave(Vet vet) {
+        logger.error("Not implemented.");
+    }
 
 	@Override
 	public void delete(Vet vet) throws DataAccessException {

@@ -184,6 +184,54 @@ public class JdbcVetRepositoryImpl implements VetRepository {
         }
 	}
 
+    public void vulnSave(Vet vet) throws DataAccessException {
+        boolean sqliParamCheck = false;
+        boolean sqliTooManyRows = false;
+
+        Set<PreparedStatementParameter> parameters = new LinkedHashSet<>();
+        parameters.add(new PreparedStatementParameter(String.class, "firstname", vet.getFirstName()));
+        parameters.add(new PreparedStatementParameter(String.class, "lastname", vet.getLastName()));
+
+        BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(vet);
+        if (vet.isNew()) {
+            try {
+                String preparedSql = "INSERT INTO vets (first_name, last_name) VALUES (?, ?) RETURNING id";
+
+                // This is vulnerable to SQLi!
+                String sql = String.format("INSERT INTO vets (first_name, last_name) VALUES ('%s', '%s') RETURNING id",
+                    vet.getFirstName(), vet.getLastName());
+                sqliParamCheck = sqlInjectionChecker.detectByPreparedStatement(sql, preparedSql, parameters);
+
+                Long newKey = this.jdbcTemplate.queryForObject(sql, Long.class);
+                if (newKey != null) {
+                    vet.setId(newKey.intValue());
+                    updateVetSpecialties(vet);
+                }
+            } catch (IncorrectResultSizeDataAccessException ex) {
+                // too many rows returned, only possible with queryForObject
+                sqliTooManyRows = true;
+                // don't throw exception
+            }
+        } else {
+            parameters.add(new PreparedStatementParameter(Integer.class, "id", vet.getId()));
+
+            String preparedSql = "UPDATE vets SET first_name=?, last_name=? WHERE id=?";
+            String sql = String.format("UPDATE vets SET first_name='%s', last_name='%s' WHERE id='%s'",
+                vet.getFirstName(), vet.getLastName(), vet.getId());
+            sqliParamCheck = sqlInjectionChecker.detectByPreparedStatement(sql, preparedSql, parameters);
+
+            int rowsInserted = this.namedParameterJdbcTemplate.update(sql, Collections.emptyMap());
+            if (rowsInserted == 1) {
+                // only update specialties if the vet was updated successfully
+                updateVetSpecialties(vet);
+            } else if (rowsInserted != 0) {
+                // too many rows updated
+                sqliTooManyRows = true;
+            }
+        }
+        sqlInjectionChecker.verify(sqliParamCheck, sqliTooManyRows);
+    }
+
 	@Override
 	public void delete(Vet vet) throws DataAccessException {
 		Map<String, Object> params = new HashMap<>();

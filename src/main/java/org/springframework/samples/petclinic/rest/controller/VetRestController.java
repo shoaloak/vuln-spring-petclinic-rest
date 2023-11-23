@@ -109,7 +109,11 @@ public class VetRestController implements VetsApi {
     public ResponseEntity<VetDto> addVet(VetDto vetDto) {
         HttpHeaders headers = new HttpHeaders();
         Vet vet = vetMapper.toVet(vetDto);
-        this.clinicService.saveVet(vet);
+        if (unsafe) {
+            this.clinicService.vulnSaveVet(vet);
+        } else {
+            this.clinicService.saveVet(vet);
+        }
         headers.setLocation(UriComponentsBuilder.newInstance().path("/api/vets/{id}").buildAndExpand(vet.getId()).toUri());
         return new ResponseEntity<>(vetMapper.toVetDto(vet), headers, HttpStatus.CREATED);
     }

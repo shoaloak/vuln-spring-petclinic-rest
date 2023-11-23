@@ -45,6 +45,8 @@ public interface VetRepository {
 
 	void save(Vet vet) throws DataAccessException;
 
+    void vulnSave(Vet vet) throws DataAccessException;
+
 	void delete(Vet vet) throws DataAccessException;
 
 

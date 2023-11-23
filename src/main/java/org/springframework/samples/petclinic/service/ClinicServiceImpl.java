@@ -145,6 +145,12 @@ public class ClinicServiceImpl implements ClinicService {
 		vetRepository.save(vet);
 	}
 
+    @Override
+    @Transactional
+    public void vulnSaveVet(Vet vet) throws DataAccessException {
+        vetRepository.vulnSave(vet);
+    }
+
 	@Override
 	@Transactional
 	public void deleteVet(Vet vet) throws DataAccessException {
