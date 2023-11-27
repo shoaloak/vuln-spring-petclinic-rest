@@ -86,7 +86,7 @@ public class SqlInjectionChecker {
 
         try {
             String escapedQuery = createEscapedQuery(statement, parameters);
-            return !query.equals(escapedQuery);
+            return !Objects.equals(query, escapedQuery);
         } catch (SQLException e) {
             logger.error("Error while checking for SQL injection", e);
 
@@ -105,6 +105,8 @@ public class SqlInjectionChecker {
             }
         } catch (IllegalStateException e) {
             logger.error("Error while extracting escaped query", e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return false;
     }
