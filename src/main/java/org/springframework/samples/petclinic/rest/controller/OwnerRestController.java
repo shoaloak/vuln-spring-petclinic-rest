@@ -16,6 +16,7 @@
 
 package org.springframework.samples.petclinic.rest.controller;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -46,6 +47,8 @@ import java.util.List;
 @CrossOrigin(exposedHeaders = "errors, content-type")
 @RequestMapping("/api")
 public class OwnerRestController implements OwnersApi {
+    @Value("${feature.unsafe}")
+    private String unsafe;
 
     private final ClinicService clinicService;
 

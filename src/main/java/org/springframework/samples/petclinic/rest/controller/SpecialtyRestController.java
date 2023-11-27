@@ -33,6 +33,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Vitaliy Fedoriv
@@ -44,7 +45,7 @@ import java.util.List;
 public class SpecialtyRestController implements SpecialtiesApi {
 
     @Value("${feature.unsafe}")
-    private boolean unsafe;
+    private String unsafe;
 
     private final ClinicService clinicService;
     private final SpecialtyMapper specialtyMapper;
@@ -73,7 +74,7 @@ public class SpecialtyRestController implements SpecialtiesApi {
     public ResponseEntity<Object> getSpecialty(String specialtyId) {
         Object specialty;
 
-        if (unsafe) {
+        if (Objects.equals(unsafe, "vuln2")) {
             specialty = this.clinicService.vulnFindSpecialtyById(specialtyId);
         } else {
             specialty = this.clinicService.findSpecialtyById(Integer.parseInt(specialtyId));

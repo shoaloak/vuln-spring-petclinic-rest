@@ -34,6 +34,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Vitaliy Fedoriv
@@ -45,7 +46,7 @@ import java.util.List;
 public class VetRestController implements VetsApi {
 
     @Value("${feature.unsafe}")
-    private boolean unsafe;
+    private String unsafe;
 
     private final ClinicService clinicService;
     private final VetMapper vetMapper;
@@ -82,7 +83,7 @@ public class VetRestController implements VetsApi {
     public ResponseEntity<Object> getVet(String vetId)  {
         Object vet;
 
-        if (unsafe) {
+        if (Objects.equals(unsafe, "vuln1")) {
             vet = this.clinicService.vulnFindVetById(vetId);
         } else {
             vet = this.clinicService.findVetById(Integer.parseInt(vetId));
@@ -109,7 +110,7 @@ public class VetRestController implements VetsApi {
     public ResponseEntity<VetDto> addVet(VetDto vetDto) {
         HttpHeaders headers = new HttpHeaders();
         Vet vet = vetMapper.toVet(vetDto);
-        if (unsafe) {
+        if (Objects.equals(unsafe, "vuln3")) {
             this.clinicService.vulnSaveVet(vet);
         } else {
             this.clinicService.saveVet(vet);
