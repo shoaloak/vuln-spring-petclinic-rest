@@ -299,8 +299,13 @@ public class ClinicServiceImpl implements ClinicService {
 	@Transactional
 	public void saveOwner(Owner owner) throws DataAccessException {
 		ownerRepository.save(owner);
-
 	}
+
+    @Override
+    @Transactional
+    public void vulnSaveOwner(Owner owner) throws DataAccessException {
+        ownerRepository.vulnSave(owner);
+    }
 
 	@Override
 	@Transactional(readOnly = true)

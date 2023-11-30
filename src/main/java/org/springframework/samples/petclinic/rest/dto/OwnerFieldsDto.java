@@ -33,6 +33,9 @@ public class OwnerFieldsDto {
   @JsonProperty("telephone")
   private String telephone;
 
+  @JsonProperty("id")
+  private Integer id;
+
   public OwnerFieldsDto firstName(String firstName) {
     this.firstName = firstName;
     return this;
@@ -42,7 +45,7 @@ public class OwnerFieldsDto {
    * The first name of the pet owner.
    * @return firstName
   */
-  @NotNull @Pattern(regexp = "^[a-zA-Z]*$") @Size(min = 1, max = 30)
+//  @NotNull @Pattern(regexp = "^[a-zA-Z]*$") @Size(min = 1, max = 30)
   @Schema(name = "firstName", example = "George", description = "The first name of the pet owner.", requiredMode = Schema.RequiredMode.REQUIRED)
   public String getFirstName() {
     return firstName;
@@ -61,7 +64,7 @@ public class OwnerFieldsDto {
    * The last name of the pet owner.
    * @return lastName
   */
-  @NotNull @Pattern(regexp = "^[a-zA-Z]*$") @Size(min = 1, max = 30)
+//  @NotNull @Pattern(regexp = "^[a-zA-Z]*$") @Size(min = 1, max = 30)
   @Schema(name = "lastName", example = "Franklin", description = "The last name of the pet owner.", requiredMode = Schema.RequiredMode.REQUIRED)
   public String getLastName() {
     return lastName;
@@ -80,7 +83,7 @@ public class OwnerFieldsDto {
    * The postal address of the pet owner.
    * @return address
   */
-  @NotNull @Size(min = 1, max = 255)
+//  @NotNull @Size(min = 1, max = 255)
   @Schema(name = "address", example = "110 W. Liberty St.", description = "The postal address of the pet owner.", requiredMode = Schema.RequiredMode.REQUIRED)
   public String getAddress() {
     return address;
@@ -99,7 +102,7 @@ public class OwnerFieldsDto {
    * The city of the pet owner.
    * @return city
   */
-  @NotNull @Size(min = 1, max = 80)
+//  @NotNull @Size(min = 1, max = 80)
   @Schema(name = "city", example = "Madison", description = "The city of the pet owner.", requiredMode = Schema.RequiredMode.REQUIRED)
   public String getCity() {
     return city;
@@ -118,7 +121,7 @@ public class OwnerFieldsDto {
    * The telephone number of the pet owner.
    * @return telephone
   */
-  @NotNull @Pattern(regexp = "^[0-9]*$") @Size(min = 1, max = 20)
+//  @NotNull @Pattern(regexp = "^[0-9]*$") @Size(min = 1, max = 20)
   @Schema(name = "telephone", example = "6085551023", description = "The telephone number of the pet owner.", requiredMode = Schema.RequiredMode.REQUIRED)
   public String getTelephone() {
     return telephone;
@@ -126,6 +129,20 @@ public class OwnerFieldsDto {
 
   public void setTelephone(String telephone) {
     this.telephone = telephone;
+  }
+
+  public OwnerFieldsDto id(Integer id) {
+    this.id = id;
+    return this;
+  }
+
+  @Schema(name = "id", accessMode = Schema.AccessMode.READ_ONLY, example = "1", description = "The ID of the pet owner.", requiredMode = Schema.RequiredMode.REQUIRED)
+  public Integer getId() {
+      return id;
+  }
+
+  public void setId(Integer id) {
+    this.id = id;
   }
 
   @Override
@@ -141,12 +158,13 @@ public class OwnerFieldsDto {
         Objects.equals(this.lastName, ownerFields.lastName) &&
         Objects.equals(this.address, ownerFields.address) &&
         Objects.equals(this.city, ownerFields.city) &&
-        Objects.equals(this.telephone, ownerFields.telephone);
+        Objects.equals(this.telephone, ownerFields.telephone) &&
+        Objects.equals(this.id, ownerFields.id);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(firstName, lastName, address, city, telephone);
+    return Objects.hash(firstName, lastName, address, city, telephone, id);
   }
 
   @Override
@@ -158,6 +176,7 @@ public class OwnerFieldsDto {
     sb.append("    address: ").append(toIndentedString(address)).append("\n");
     sb.append("    city: ").append(toIndentedString(city)).append("\n");
     sb.append("    telephone: ").append(toIndentedString(telephone)).append("\n");
+    sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("}");
     return sb.toString();
   }

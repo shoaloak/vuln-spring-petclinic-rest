@@ -38,6 +38,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import jakarta.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Vitaliy Fedoriv
@@ -93,12 +94,17 @@ public class OwnerRestController implements OwnersApi {
         return new ResponseEntity<>(ownerMapper.toOwnerDto(owner), HttpStatus.OK);
     }
 
+    /* checkout if we can achieve deeper code execution explicitly with this endpoint */
     @PreAuthorize("hasRole(@roles.OWNER_ADMIN)")
     @Override
     public ResponseEntity<OwnerDto> addOwner(OwnerFieldsDto ownerFieldsDto) {
         HttpHeaders headers = new HttpHeaders();
         Owner owner = ownerMapper.toOwner(ownerFieldsDto);
-        this.clinicService.saveOwner(owner);
+        if (Objects.equals(unsafe, "vuln4")) {
+            this.clinicService.vulnSaveOwner(owner);
+        } else {
+            this.clinicService.saveOwner(owner);
+        }
         OwnerDto ownerDto = ownerMapper.toOwnerDto(owner);
         headers.setLocation(UriComponentsBuilder.newInstance()
             .path("/api/owners/{id}").buildAndExpand(owner.getId()).toUri());
@@ -133,6 +139,7 @@ public class OwnerRestController implements OwnersApi {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    // Make vulnerable
     @PreAuthorize("hasRole(@roles.OWNER_ADMIN)")
     @Override
     public ResponseEntity<PetDto> addPetToOwner(Integer ownerId, PetFieldsDto petFieldsDto) {
@@ -148,9 +155,13 @@ public class OwnerRestController implements OwnersApi {
         return new ResponseEntity<>(petDto, headers, HttpStatus.CREATED);
     }
 
+    // Make vulnerable?
+    // POST /owners/{ownerId}/pets/{petId}/visits
     @PreAuthorize("hasRole(@roles.OWNER_ADMIN)")
     @Override
     public ResponseEntity<VisitDto> addVisitToOwner(Integer ownerId, Integer petId, VisitFieldsDto visitFieldsDto) {
+        // this method should be changed to include the ownerId
+        //
         HttpHeaders headers = new HttpHeaders();
         Visit visit = visitMapper.toVisit(visitFieldsDto);
         Pet pet = new Pet();

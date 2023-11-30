@@ -21,6 +21,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataAccessException;
 import org.springframework.orm.hibernate5.support.OpenSessionInViewFilter;
@@ -44,6 +46,7 @@ public class JpaOwnerRepositoryImpl implements OwnerRepository {
     @PersistenceContext
     private EntityManager em;
 
+    private final Logger logger = LoggerFactory.getLogger(JpaOwnerRepositoryImpl.class);
 
     /**
      * Important: in the current version of this method, we load Owners with all their Pets and Visits while
@@ -79,6 +82,11 @@ public class JpaOwnerRepositoryImpl implements OwnerRepository {
             this.em.merge(owner);
         }
 
+    }
+
+    @Override
+    public void vulnSave(Owner owner) {
+        logger.error("Not implemented.");
     }
 
 	@SuppressWarnings("unchecked")

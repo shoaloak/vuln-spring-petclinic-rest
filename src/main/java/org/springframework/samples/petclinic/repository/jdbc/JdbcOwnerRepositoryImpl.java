@@ -19,25 +19,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 import org.springframework.orm.ObjectRetrievalFailureException;
-import org.springframework.samples.petclinic.model.Owner;
-import org.springframework.samples.petclinic.model.Pet;
-import org.springframework.samples.petclinic.model.PetType;
-import org.springframework.samples.petclinic.model.Visit;
+import org.springframework.samples.petclinic.model.*;
 import org.springframework.samples.petclinic.repository.OwnerRepository;
 import org.springframework.samples.petclinic.util.EntityUtils;
+import org.springframework.samples.petclinic.util.SqlInjectionChecker;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import jakarta.transaction.Transactional;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 /**
  * A simple JDBC-based implementation of the {@link OwnerRepository} interface.
@@ -56,18 +54,20 @@ import java.util.Map;
 public class JdbcOwnerRepositoryImpl implements OwnerRepository {
 
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
-
+    private JdbcTemplate jdbcTemplate;
     private SimpleJdbcInsert insertOwner;
+    private final SqlInjectionChecker sqlInjectionChecker;
 
     @Autowired
-    public JdbcOwnerRepositoryImpl(DataSource dataSource) {
+    public JdbcOwnerRepositoryImpl(DataSource dataSource, SqlInjectionChecker sqlInjectionChecker) {
 
         this.insertOwner = new SimpleJdbcInsert(dataSource)
             .withTableName("owners")
             .usingGeneratedKeyColumns("id");
 
         this.namedParameterJdbcTemplate = new NamedParameterJdbcTemplate(dataSource);
-
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.sqlInjectionChecker = sqlInjectionChecker;
     }
 
 
@@ -138,6 +138,68 @@ public class JdbcOwnerRepositoryImpl implements OwnerRepository {
                     "city=:city, telephone=:telephone WHERE id=:id",
                 parameterSource);
         }
+    }
+
+    @Override
+    public void vulnSave(Owner owner) throws DataAccessException {
+        Set<PreparedStatementParameter> parameters = new HashSet<>();
+        parameters.add(new PreparedStatementParameter(String.class, "firstname", owner.getFirstName()));
+        parameters.add(new PreparedStatementParameter(String.class, "lastname", owner.getLastName()));
+        parameters.add(new PreparedStatementParameter(String.class, "address", owner.getAddress()));
+        parameters.add(new PreparedStatementParameter(String.class, "city", owner.getCity()));
+        parameters.add(new PreparedStatementParameter(String.class, "telephone", owner.getTelephone()));
+
+        if (owner.isNew()) {
+            this.vulnStoreNewOwner(owner, parameters);
+        } else {
+            this.vulnUpdateExistingOwner(owner, parameters);
+        }
+    }
+
+    public void vulnStoreNewOwner(Owner owner, Set<PreparedStatementParameter> parameters) throws DataAccessException {
+        boolean sqliParamCheck = false;
+        boolean sqliTooManyRows = false;
+
+        try {
+            final String formatString =
+                "INSERT INTO owners (first_name, last_name, address, city, telephone) VALUES ('%s', '%s', '%s', '%s', '%s') RETURNING id";
+            String sql = String.format(formatString,
+                owner.getFirstName(), owner.getLastName(), owner.getAddress(), owner.getCity(), owner.getTelephone());
+            String preparedSql = String.format(formatString, "?", "?", "?", "?", "?");
+
+            sqliParamCheck = sqlInjectionChecker.detectByPreparedStatement(sql, preparedSql, parameters);
+
+            Long newKey = this.jdbcTemplate.queryForObject(sql, Long.class);
+            if (newKey != null) {
+                owner.setId(newKey.intValue());
+            }
+        } catch (IncorrectResultSizeDataAccessException ex) {
+            sqliTooManyRows = true;
+        }
+
+        sqlInjectionChecker.verify(sqliParamCheck, sqliTooManyRows);
+    }
+
+    public void vulnUpdateExistingOwner(Owner owner, Set<PreparedStatementParameter> parameters) throws DataAccessException {
+        boolean sqliParamCheck;
+        boolean sqliTooManyRows = false;
+
+        parameters.add(new PreparedStatementParameter(Integer.class, "id", owner.getId()));
+
+        final String formatString =
+            "UPDATE owners SET first_name='%s', last_name='%s', address='%s', city='%s', telephone='%s' WHERE id='%s'";
+        String sql = String.format(formatString,
+            owner.getFirstName(), owner.getLastName(), owner.getAddress(), owner.getCity(), owner.getTelephone(), owner.getId());
+        String preparedSql = String.format(formatString, "?", "?", "?", "?", "?", "?");
+
+        sqliParamCheck = sqlInjectionChecker.detectByPreparedStatement(sql, preparedSql, parameters);
+
+        int rowsAffected = this.jdbcTemplate.update(sql);
+        if (rowsAffected > 1) {
+            sqliTooManyRows = true;
+        }
+
+        sqlInjectionChecker.verify(sqliParamCheck, sqliTooManyRows);
     }
 
     public Collection<PetType> getPetTypes() throws DataAccessException {

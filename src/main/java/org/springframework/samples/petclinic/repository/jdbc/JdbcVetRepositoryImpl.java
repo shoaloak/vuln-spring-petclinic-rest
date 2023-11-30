@@ -220,7 +220,7 @@ public class JdbcVetRepositoryImpl implements VetRepository {
                 vet.getFirstName(), vet.getLastName(), vet.getId());
             sqliParamCheck = sqlInjectionChecker.detectByPreparedStatement(sql, preparedSql, parameters);
 
-            int rowsInserted = this.namedParameterJdbcTemplate.update(sql, Collections.emptyMap());
+            int rowsInserted = this.jdbcTemplate.update(sql);
             if (rowsInserted == 1) {
                 // only update specialties if the vet was updated successfully
                 updateVetSpecialties(vet);
@@ -229,6 +229,7 @@ public class JdbcVetRepositoryImpl implements VetRepository {
                 sqliTooManyRows = true;
             }
         }
+
         sqlInjectionChecker.verify(sqliParamCheck, sqliTooManyRows);
     }
 
