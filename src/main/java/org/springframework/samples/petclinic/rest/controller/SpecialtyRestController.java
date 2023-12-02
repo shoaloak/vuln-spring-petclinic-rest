@@ -74,7 +74,7 @@ public class SpecialtyRestController implements SpecialtiesApi {
     public ResponseEntity<Object> getSpecialty(String specialtyId) {
         Object specialty;
 
-        if (Objects.equals(unsafe, "vuln2")) {
+        if (Objects.equals(unsafe, "vuln2") || Objects.equals(unsafe, "all")) {
             specialty = this.clinicService.vulnFindSpecialtyById(specialtyId);
         } else {
             specialty = this.clinicService.findSpecialtyById(Integer.parseInt(specialtyId));

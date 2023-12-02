@@ -100,7 +100,7 @@ public class OwnerRestController implements OwnersApi {
     public ResponseEntity<OwnerDto> addOwner(OwnerFieldsDto ownerFieldsDto) {
         HttpHeaders headers = new HttpHeaders();
         Owner owner = ownerMapper.toOwner(ownerFieldsDto);
-        if (Objects.equals(unsafe, "vuln4")) {
+        if (Objects.equals(unsafe, "vuln4") || Objects.equals(unsafe, "all")) {
             this.clinicService.vulnSaveOwner(owner);
         } else {
             this.clinicService.saveOwner(owner);

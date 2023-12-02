@@ -83,8 +83,8 @@ public class VetRestController implements VetsApi {
     public ResponseEntity<Object> getVet(String vetId)  {
         Object vet;
 
-        if (Objects.equals(unsafe, "vuln1")) {
-            vet = this.clinicService.vulnFindVetById(vetId);
+        if (Objects.equals(unsafe, "vuln1") || Objects.equals(unsafe, "all")) {
+                vet = this.clinicService.vulnFindVetById(vetId);
         } else {
             vet = this.clinicService.findVetById(Integer.parseInt(vetId));
         }
@@ -110,7 +110,7 @@ public class VetRestController implements VetsApi {
     public ResponseEntity<VetDto> addVet(VetDto vetDto) {
         HttpHeaders headers = new HttpHeaders();
         Vet vet = vetMapper.toVet(vetDto);
-        if (Objects.equals(unsafe, "vuln3")) {
+        if (Objects.equals(unsafe, "vuln3") || Objects.equals(unsafe, "all")) {
             this.clinicService.vulnSaveVet(vet);
         } else {
             this.clinicService.saveVet(vet);
