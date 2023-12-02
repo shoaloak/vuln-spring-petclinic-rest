@@ -42,12 +42,15 @@ POST: /users
 
 Out of these, some are made vulnerable to SQL injection:
 ```HTTP
-# other table data (UNION), single row
+# other table data (UNION)
 GET: /vets/{vetId}
-# subvert logic, single row
+# subvert logic
 GET: /specialties/{specialtyId} 
-# (hidden) inserting data, single row
+# (hidden) inserting data
 POST: /vets
+
+# Deeper insert
+POST: /owners
 ```
 
 To enable a vulnerability, set `vuln{x}` to `true` in `application.properties`.
