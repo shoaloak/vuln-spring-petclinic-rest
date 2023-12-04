@@ -94,7 +94,6 @@ public class OwnerRestController implements OwnersApi {
         return new ResponseEntity<>(ownerMapper.toOwnerDto(owner), HttpStatus.OK);
     }
 
-    /* checkout if we can achieve deeper code execution explicitly with this endpoint */
     @PreAuthorize("hasRole(@roles.OWNER_ADMIN)")
     @Override
     public ResponseEntity<OwnerDto> addOwner(OwnerFieldsDto ownerFieldsDto) {
@@ -111,9 +110,19 @@ public class OwnerRestController implements OwnersApi {
         return new ResponseEntity<>(ownerDto, headers, HttpStatus.CREATED);
     }
 
+    /**
+     * Vulnerability 5: Intentionally vulnerable to SQLi with deeper code execution path.
+     * @param ownerId The ID of the pet owner. (required)
+     * @param ownerFieldsDto The pet owner details to use for the update. (required)
+     * @return
+     */
     @PreAuthorize("hasRole(@roles.OWNER_ADMIN)")
     @Override
     public ResponseEntity<OwnerDto> updateOwner(Integer ownerId, OwnerFieldsDto ownerFieldsDto) {
+        if (Objects.equals(unsafe, "vuln5") || Objects.equals(unsafe, "all")) {
+            return this.vulnUpdateOwner(ownerId, ownerFieldsDto);
+        }
+
         Owner currentOwner = this.clinicService.findOwnerById(ownerId);
         if (currentOwner == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -124,6 +133,28 @@ public class OwnerRestController implements OwnersApi {
         currentOwner.setLastName(ownerFieldsDto.getLastName());
         currentOwner.setTelephone(ownerFieldsDto.getTelephone());
         this.clinicService.saveOwner(currentOwner);
+        return new ResponseEntity<>(ownerMapper.toOwnerDto(currentOwner), HttpStatus.NO_CONTENT);
+    }
+
+    // Verify ownerId
+    private ResponseEntity<OwnerDto> vulnUpdateOwner(Integer ownerId, OwnerFieldsDto ownerFieldsDto) {
+        Owner currentOwner = this.clinicService.findOwnerById(ownerId);
+        if (currentOwner == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        return this.vulnStoreOwner(currentOwner, ownerFieldsDto);
+    }
+
+    // Convert Dto and store
+    private ResponseEntity<OwnerDto> vulnStoreOwner(Owner currentOwner, OwnerFieldsDto ownerFieldsDto) {
+        currentOwner.setAddress(ownerFieldsDto.getAddress());
+        currentOwner.setCity(ownerFieldsDto.getCity());
+        currentOwner.setFirstName(ownerFieldsDto.getFirstName());
+        currentOwner.setLastName(ownerFieldsDto.getLastName());
+        currentOwner.setTelephone(ownerFieldsDto.getTelephone());
+
+        this.clinicService.vulnSaveOwner(currentOwner);
         return new ResponseEntity<>(ownerMapper.toOwnerDto(currentOwner), HttpStatus.NO_CONTENT);
     }
 
@@ -139,7 +170,6 @@ public class OwnerRestController implements OwnersApi {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    // Make vulnerable
     @PreAuthorize("hasRole(@roles.OWNER_ADMIN)")
     @Override
     public ResponseEntity<PetDto> addPetToOwner(Integer ownerId, PetFieldsDto petFieldsDto) {
@@ -155,13 +185,10 @@ public class OwnerRestController implements OwnersApi {
         return new ResponseEntity<>(petDto, headers, HttpStatus.CREATED);
     }
 
-    // Make vulnerable?
-    // POST /owners/{ownerId}/pets/{petId}/visits
     @PreAuthorize("hasRole(@roles.OWNER_ADMIN)")
     @Override
     public ResponseEntity<VisitDto> addVisitToOwner(Integer ownerId, Integer petId, VisitFieldsDto visitFieldsDto) {
         // this method should be changed to include the ownerId
-        //
         HttpHeaders headers = new HttpHeaders();
         Visit visit = visitMapper.toVisit(visitFieldsDto);
         Pet pet = new Pet();
