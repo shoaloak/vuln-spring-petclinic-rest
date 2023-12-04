@@ -139,5 +139,6 @@ curl -i -s -k -X $'POST' \
     $'http://localhost:9966/petclinic/api/owners'
 ```
 
-### Vulnerability 5: `PUT /owners`
-This vulnerability leverages the same injection as [Vulnerability 4](#vulnerability-4-post-owners), but with deeper code paths.
+### Vulnerability 5: `PUT /owners/{ownerId}`
+This vulnerability leverages the same injection as [Vulnerability 4](#vulnerability-4-post-owners), but with deeper code execution paths.
+I.e., a faulty ownerId will cause shallower execution.
