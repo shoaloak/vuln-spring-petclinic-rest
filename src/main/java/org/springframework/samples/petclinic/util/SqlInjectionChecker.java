@@ -17,6 +17,9 @@ import java.sql.SQLSyntaxErrorException;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * @author Axel Koolhaas
+ */
 @Component
 public class SqlInjectionChecker {
     @Value("${feature.sqli.detection}")

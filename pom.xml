@@ -4,11 +4,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.springframework.samples</groupId>
-    <artifactId>spring-petclinic-rest</artifactId>
+    <artifactId>vulnerable-spring-petclinic-rest</artifactId>
     <version>3.0.2</version>
 
-    <description>REST version of the Spring Petclinic sample application</description>
-    <url>https://spring-petclinic.github.io/</url>
+    <description>REST version of the Spring Petclinic sample application with SQLi vulnerabilities</description>
+    <url>https://github.com/shoaloak/vuln-spring-petclinic-rest/</url>
 
     <parent>
         <groupId>org.springframework.boot</groupId>

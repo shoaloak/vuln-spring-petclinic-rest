@@ -40,7 +40,7 @@ import org.springframework.stereotype.Repository;
 
 /**
  * @author Vitaliy Fedoriv
- *
+ * @author Axel Koolhaas
  */
 
 @Repository
@@ -79,9 +79,7 @@ public class JdbcSpecialtyRepositoryImpl implements SpecialtyRepository {
 	}
 
     /**
-     * Vulnerable to SQLi
-     * @param id
-     * @return
+     * Vulnerability: #2
      */
     @Override
     public String vulnFindById(String id) {

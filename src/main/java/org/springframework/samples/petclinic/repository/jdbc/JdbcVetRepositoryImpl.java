@@ -52,6 +52,7 @@ import org.springframework.stereotype.Repository;
  * @author Mark Fisher
  * @author Michael Isvy
  * @author Vitaliy Fedoriv
+ * @author Axel Koolhaas
  */
 @Repository
 @Profile("jdbc")

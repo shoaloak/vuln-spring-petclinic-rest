@@ -1,8 +1,6 @@
-# REST version of Spring PetClinic Sample Application (spring-framework-petclinic extend ) 
+# SQLi vulnerable REST version of Spring PetClinic Sample Application (spring-framework-petclinic extend ) 
 
-[![Build Status](https://github.com/spring-petclinic/spring-petclinic-rest/actions/workflows/maven-build.yml/badge.svg)](https://github.com/spring-petclinic/spring-petclinic-rest/actions/workflows/maven-build.yml)
-
-This backend version of the Spring Petclinic application only provides a REST API. **There is no UI**.
+This SQLi vulnerable, backend version of the Spring Petclinic application only provides a REST API. **There is no UI**.
 The [spring-petclinic-angular project](https://github.com/spring-petclinic/spring-petclinic-angular) is a Angular front-end application which consumes the REST API.
 
 ## Understanding the Spring Petclinic application with a few diagrams

@@ -37,6 +37,7 @@ import java.util.Objects;
 
 /**
  * @author Vitaliy Fedoriv
+ * @author Axel Koolhaas
  */
 
 @RestController

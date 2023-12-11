@@ -42,6 +42,7 @@ import java.util.Objects;
 
 /**
  * @author Vitaliy Fedoriv
+ * @author Axel Koolhaas
  */
 
 @RestController
@@ -94,12 +95,18 @@ public class OwnerRestController implements OwnersApi {
         return new ResponseEntity<>(ownerMapper.toOwnerDto(owner), HttpStatus.OK);
     }
 
+    /**
+     * Vulnerability 4 & 5
+     * @param ownerFieldsDto The pet owner (required)
+     */
     @PreAuthorize("hasRole(@roles.OWNER_ADMIN)")
     @Override
     public ResponseEntity<OwnerDto> addOwner(OwnerFieldsDto ownerFieldsDto) {
         HttpHeaders headers = new HttpHeaders();
         Owner owner = ownerMapper.toOwner(ownerFieldsDto);
-        if (Objects.equals(unsafe, "vuln4") || Objects.equals(unsafe, "all")) {
+        if (Objects.equals(unsafe, "vuln4")
+            || Objects.equals(unsafe, "vuln5")
+            || Objects.equals(unsafe, "all")) {
             this.clinicService.vulnSaveOwner(owner);
         } else {
             this.clinicService.saveOwner(owner);
@@ -111,15 +118,16 @@ public class OwnerRestController implements OwnersApi {
     }
 
     /**
-     * Vulnerability 5: Intentionally vulnerable to SQLi with deeper code execution path.
+     * Vulnerability 6 & 7: Intentionally vulnerable to SQLi with deeper code execution path.
      * @param ownerId The ID of the pet owner. (required)
      * @param ownerFieldsDto The pet owner details to use for the update. (required)
-     * @return
      */
     @PreAuthorize("hasRole(@roles.OWNER_ADMIN)")
     @Override
     public ResponseEntity<OwnerDto> updateOwner(Integer ownerId, OwnerFieldsDto ownerFieldsDto) {
-        if (Objects.equals(unsafe, "vuln5") || Objects.equals(unsafe, "all")) {
+        if (Objects.equals(unsafe, "vuln6")
+            || Objects.equals(unsafe, "vuln7")
+            || Objects.equals(unsafe, "all")) {
             return this.vulnUpdateOwner(ownerId, ownerFieldsDto);
         }
 

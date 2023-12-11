@@ -16,6 +16,7 @@
 package org.springframework.samples.petclinic.repository.jdbc;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -48,10 +49,13 @@ import java.util.*;
  * @author Mark Fisher
  * @author Antoine Rey
  * @author Vitaliy Fedoriv
+ * @author Axel Koolhaas
  */
 @Repository
 @Profile("jdbc")
 public class JdbcOwnerRepositoryImpl implements OwnerRepository {
+    @Value("${feature.unsafe}")
+    private String unsafe;
 
     private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private JdbcTemplate jdbcTemplate;
@@ -142,6 +146,8 @@ public class JdbcOwnerRepositoryImpl implements OwnerRepository {
 
     @Override
     public void vulnSave(Owner owner) throws DataAccessException {
+        BeanPropertySqlParameterSource parameterSource = new BeanPropertySqlParameterSource(owner);
+
         Set<PreparedStatementParameter> parameters = new HashSet<>();
         parameters.add(new PreparedStatementParameter(String.class, "firstname", owner.getFirstName()));
         parameters.add(new PreparedStatementParameter(String.class, "lastname", owner.getLastName()));
@@ -150,9 +156,25 @@ public class JdbcOwnerRepositoryImpl implements OwnerRepository {
         parameters.add(new PreparedStatementParameter(String.class, "telephone", owner.getTelephone()));
 
         if (owner.isNew()) {
-            this.vulnStoreNewOwner(owner, parameters);
+            if (Objects.equals(unsafe, "vuln4")
+                || Objects.equals(unsafe, "vuln6")
+                || Objects.equals(unsafe, "all")) {
+                this.vulnStoreNewOwner(owner, parameters);
+            } else {
+                Number newKey = this.insertOwner.executeAndReturnKey(parameterSource);
+                owner.setId(newKey.intValue());
+            }
         } else {
-            this.vulnUpdateExistingOwner(owner, parameters);
+            if (Objects.equals(unsafe, "vuln5")
+                || Objects.equals(unsafe, "vuln7")
+                || Objects.equals(unsafe, "all")) {
+                this.vulnUpdateExistingOwner(owner, parameters);
+            } else {
+                this.namedParameterJdbcTemplate.update(
+                    "UPDATE owners SET first_name=:firstName, last_name=:lastName, address=:address, " +
+                        "city=:city, telephone=:telephone WHERE id=:id",
+                    parameterSource);
+            }
         }
     }
 

