@@ -91,7 +91,8 @@ public class SqlInjectionChecker {
             String escapedQuery = createEscapedQuery(statement, parameters);
             return !Objects.equals(query, escapedQuery);
         } catch (SQLException e) {
-            logger.error("Error while checking for SQL injection", e);
+            logger.error("Error while checking for SQL injection: {}", e.getMessage());
+            logger.error("Likely a SQL injection: {}", statement);
 
             if (e instanceof SQLSyntaxErrorException) {
                 String sqlState = e.getSQLState();
@@ -103,11 +104,14 @@ public class SqlInjectionChecker {
                     // Other SQLSyntaxErrorException handling
                     logger.error("Other SQLSyntaxErrorException: " + sqlState);
                 }
+            } else if (e.getSQLState().equals("22023")) {
+                logger.error("Out of range column index");
+                // maybe return true here?
             } else {
                 logger.error("Other SQLException handling");
             }
         } catch (IllegalStateException e) {
-            logger.error("Error while extracting escaped query", e);
+            logger.error("Error while extracting escaped query: {}", e.getMessage());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
